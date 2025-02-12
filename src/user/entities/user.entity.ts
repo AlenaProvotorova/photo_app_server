@@ -1,4 +1,4 @@
-import { Category } from 'src/category/entities/category.entity';
+import { FileEntity } from 'src/files/entities/file.entity';
 import {
   Column,
   CreateDateColumn,
@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class User {
+export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -28,8 +28,6 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Category, (category) => category.user, {
-    onDelete: 'CASCADE',
-  })
-  categories: Category[];
+  @OneToMany(() => FileEntity, (file) => file.user)
+  files: FileEntity[];
 }
