@@ -1,4 +1,5 @@
 import { FileEntity } from 'src/files/entities/file.entity';
+import { FolderEntity } from 'src/folders/entities/folder.entity';
 import {
   Column,
   CreateDateColumn,
@@ -30,4 +31,7 @@ export class UserEntity {
 
   @OneToMany(() => FileEntity, (file) => file.user)
   files: FileEntity[];
+
+  @OneToMany(() => FolderEntity, (folder) => folder.user)
+  folders: FolderEntity[];
 }

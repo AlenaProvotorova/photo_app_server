@@ -17,6 +17,7 @@ import { fileStorage } from './storage';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/auth/decorators/user-id.decorator';
 import { FileType } from './entities/file.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('files')
 @ApiTags('files')
@@ -26,6 +27,7 @@ export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(@UserId() userId: number, @Query('type') fileType: FileType) {
     return this.filesService.findAll(userId, fileType);
   }

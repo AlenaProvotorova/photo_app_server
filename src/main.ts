@@ -2,26 +2,40 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express';
-import { join } from 'path';
+import * as cors from 'cors';
+// import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
+
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: false });
-  // app.setGlobalPrefix('api');
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false });
+  // app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+  app.use('/uploads', express.static('uploads', {
+    setHeaders: (res) => {
+        res.set('Access-Control-Allow-Origin', 'http://localhost:64641');
+    }
+}));
+  app.setGlobalPrefix('api');
   app.enableCors({ credentials: true, origin: true });
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
-  // await app.listen(process.env.PORT ?? 7777);
-
+  // disable cors for local development
+  app.use(cors({
+    origin: 'http://localhost:64641', 
+    credentials: true, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+  
   const config = new DocumentBuilder()
-    .setTitle('Облачное хранилище')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  .setTitle('Облачное хранилище')
+  .setVersion('1.0')
+  .addBearerAuth()
+  .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, documentFactory, {
     swaggerOptions: {
       persistAuthorization: true,
     },
   });
-  await app.listen(3000);
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

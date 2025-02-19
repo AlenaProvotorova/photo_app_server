@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FilesModule } from './files/files.module';
+import { FolderModule } from './folders/folders.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { FilesModule } from './files/files.module';
       inject: [ConfigService],
     }),
     FilesModule,
+    FolderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
