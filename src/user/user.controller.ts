@@ -23,7 +23,7 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get('/me')
+  @Get('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   getMe(@UserId() id: number) {

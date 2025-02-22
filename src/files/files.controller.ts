@@ -74,8 +74,12 @@ async findAll(
   }
 
   @Delete()
-  remove(@UserId() userId: number, @Query('ids') ids: string) {
-    return this.filesService.remove(userId, ids);
+  async remove(@Query('ids') ids: string, @Query('folderId') folderId: number) {
+    try {
+      return await this.filesService.remove( ids, folderId);
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+  }
   }
 
 }

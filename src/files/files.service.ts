@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity, FileType } from './entities/file.entity';
 import { Repository } from 'typeorm';
@@ -48,11 +48,13 @@ export class FilesService {
     });
   }
 
-  remove(userId: number, ids: string) {
+   remove( ids: string, folderId: number) {
     const idsArray = ids.split(',')
-    const gb = this.folderRepository.createQueryBuilder('file');
-
-    gb.where('id IN(:...ids) AND userId = :userId', { ids: idsArray, userId })
-    return gb.softDelete().execute();
+    const qb =  this.repository
+    .createQueryBuilder('file')
+    .where('id IN(:...ids) AND folderId = :folderId', { ids: idsArray, folderId })
+    .softDelete()
+    .execute();
+    return qb;
   } 
 }

@@ -34,11 +34,11 @@ export class FileEntity {
   @Column()
   mimetype: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'folderId' })
   folderId: string;
   
   @ManyToOne(() => FolderEntity, folder => folder.files, { nullable: true })
-  @JoinColumn()
+  @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;
 
   @DeleteDateColumn()
