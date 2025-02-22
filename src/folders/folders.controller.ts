@@ -2,9 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { UpdateFolderDto } from './dto/update-folder.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FolderService } from './folders.service';
-import { UserId } from 'src/auth/decorators/user-id.decorator';
+import { UserId } from '../auth/decorators/user-id.decorator';
 
 @Controller('folders')
 @ApiTags('folders')

@@ -12,14 +12,14 @@ async function bootstrap() {
   // app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   app.use('/uploads', express.static('uploads', {
     setHeaders: (res) => {
-        res.set('Access-Control-Allow-Origin', 'http://localhost:64641');
+        res.set('Access-Control-Allow-Origin', `http://localhost:${process.env.CLIENT_PORT}`);
     }
 }));
   app.setGlobalPrefix('api');
   app.enableCors({ credentials: true, origin: true });
   // disable cors for local development
   app.use(cors({
-    origin: 'http://localhost:64641', 
+    origin: `http://localhost:${process.env.CLIENT_PORT}`, 
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

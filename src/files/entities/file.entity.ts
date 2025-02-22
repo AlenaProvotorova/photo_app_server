@@ -1,10 +1,11 @@
-import { API_CONFIG } from 'api.config';
-import { UserEntity } from 'src/user/entities/user.entity';
+import { API_CONFIG } from '../../config/api.config';
+import { FolderEntity } from '../../folders/entities/folder.entity';
 import {
   AfterLoad,
   Column,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -33,8 +34,12 @@ export class FileEntity {
   @Column()
   mimetype: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.files)
-  user: UserEntity;
+  @Column({ nullable: true })
+  folderId: string;
+  
+  @ManyToOne(() => FolderEntity, folder => folder.files, { nullable: true })
+  @JoinColumn()
+  folder: FolderEntity;
 
   @DeleteDateColumn()
   deletedAt?: string;
