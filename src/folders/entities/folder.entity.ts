@@ -11,6 +11,9 @@ export class FolderEntity {
   @Column()
   name: string;
 
+  @Column({ unique: true })
+  url: string;
+
   @ManyToOne(() => UserEntity, (user) => user.folders)
   user: UserEntity;
 
