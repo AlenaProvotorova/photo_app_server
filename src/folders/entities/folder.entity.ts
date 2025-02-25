@@ -1,3 +1,4 @@
+import { ClientEntity } from 'src/client/entities/client.entity';
 import { FileEntity } from '../../files/entities/file.entity';
 import { UserEntity } from '../../user/entities/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToMany, DeleteDateColumn } from 'typeorm';
@@ -24,6 +25,9 @@ export class FolderEntity {
 
   @OneToMany(() => FileEntity, (file) => file.folder)
   files: FileEntity[];
+
+  @OneToMany(() => ClientEntity, (client) => client.folder)
+  clients: ClientEntity[];
 
   @DeleteDateColumn()
   deletedAt?: Date;
