@@ -23,7 +23,9 @@ export class FolderEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => FileEntity, (file) => file.folder)
+  @OneToMany(() => FileEntity, (file) => file.folder, {
+    onDelete: 'CASCADE'  
+  })
   files: FileEntity[];
 
   @OneToMany(() => ClientEntity, (client) => client.folder)

@@ -37,7 +37,9 @@ export class FileEntity {
   @Column({ nullable: true, name: 'folderId' })
   folderId: string;
   
-  @ManyToOne(() => FolderEntity, folder => folder.files, { nullable: true })
+  @ManyToOne(() => FolderEntity, folder => folder.files, {
+    onDelete: 'CASCADE'
+  })
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;
 
