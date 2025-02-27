@@ -15,5 +15,4 @@ export class ClientEntity {
   @ManyToOne(() => FolderEntity, folder => folder.clients)
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;
-
 }

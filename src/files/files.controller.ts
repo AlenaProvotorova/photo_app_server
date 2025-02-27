@@ -9,7 +9,6 @@ import {
   UseGuards,
   Query,
   Delete,
-  Body,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
@@ -81,5 +80,6 @@ async findAll(
       throw new InternalServerErrorException(error.message);
   }
   }
+
 
 }

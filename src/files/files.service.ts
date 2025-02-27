@@ -1,19 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity, FileType } from './entities/file.entity';
 import { Repository } from 'typeorm';
-import { mkdirSync, renameSync } from 'fs';
-import { existsSync } from 'fs';
-import { FolderEntity } from '../folders/entities/folder.entity';
+import { mkdirSync, renameSync, existsSync } from 'fs';
 
 @Injectable()
 export class FilesService {
   constructor(
     @InjectRepository(FileEntity)
     private repository: Repository<FileEntity>,
-    @InjectRepository(FolderEntity)
-    private folderRepository: Repository<FolderEntity>,
-  ) {}
+    ) {}
 
   findAll(userId: number, fileType: FileType, folderId: number) {
     const qb = this.repository.createQueryBuilder('file');  

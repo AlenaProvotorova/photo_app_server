@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { FilesModule } from './files/files.module';
 import { FolderModule } from './folders/folders.module';
 import { ClientsModule } from './client/clients.module';
+import { SizeModule } from './sizes/sizes.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ClientsModule } from './client/clients.module';
     FilesModule,
     FolderModule,
     ClientsModule,
+    SizeModule,
   ],
 })
 export class AppModule {}
