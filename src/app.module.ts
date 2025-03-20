@@ -7,6 +7,7 @@ import { FilesModule } from './files/files.module';
 import { FolderModule } from './folders/folders.module';
 import { ClientsModule } from './client/clients.module';
 import { SizeModule } from './sizes/sizes.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SizeModule } from './sizes/sizes.module';
     FolderModule,
     ClientsModule,
     SizeModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}

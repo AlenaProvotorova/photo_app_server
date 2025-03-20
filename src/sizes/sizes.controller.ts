@@ -1,4 +1,4 @@
-import { Controller, Post, Body,  UseGuards } from '@nestjs/common';
+import { Controller, Post, Body,  UseGuards, Get } from '@nestjs/common';
 import { CreateSizeDto } from './dto/create-size.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -16,4 +16,8 @@ export class SizeController {
     return this.sizeService.create(dto);
   }
 
+  @Get()
+  findAll() {
+    return this.sizeService.findAll();
+  }
 }

@@ -18,7 +18,6 @@ import { fileStorage } from './storage';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/auth/decorators/user-id.decorator';
 import { FileType } from './entities/file.entity';
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('files')
 @ApiTags('files')

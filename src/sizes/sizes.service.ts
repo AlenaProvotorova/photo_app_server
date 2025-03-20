@@ -19,4 +19,8 @@ export class SizeService {
     return this.repository.save(size);
   }
 
+  async findAll() {
+    return this.repository.find();
+  }
+
 }
