@@ -8,6 +8,7 @@ import { FolderModule } from './folders/folders.module';
 import { ClientsModule } from './client/clients.module';
 import { SizeModule } from './sizes/sizes.module';
 import { OrdersModule } from './orders/orders.module';
+import { FolderSettingsModule } from './folder-settings/folder-settings.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { OrdersModule } from './orders/orders.module';
     ClientsModule,
     SizeModule,
     OrdersModule,
+    FolderSettingsModule,
   ],
 })
 export class AppModule {}

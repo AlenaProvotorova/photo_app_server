@@ -5,12 +5,14 @@ import { FolderEntity } from './entities/folder.entity';
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { UpdateFolderDto } from './dto/update-folder.dto';
 import { randomBytes } from 'crypto';
+import { FolderSettingsService } from 'src/folder-settings/folder-settings.service';
 
 @Injectable()
 export class FolderService {
   constructor(
     @InjectRepository(FolderEntity)
     private repository: Repository<FolderEntity>,
+    private settingsService: FolderSettingsService,
   ) {}
 
   private generateUrl(id: number, name: string): string {
@@ -44,7 +46,7 @@ export class FolderService {
     const savedFolder = await this.repository.save(folder);
     
     savedFolder.url = this.generateUrl(savedFolder.id, savedFolder.name);
-    
+    await this.settingsService.createDefaultSettings(savedFolder.id);
     return this.repository.save(savedFolder);
   }
 

@@ -1,7 +1,8 @@
 import { ClientEntity } from 'src/client/entities/client.entity';
 import { FileEntity } from '../../files/entities/file.entity';
 import { UserEntity } from '../../user/entities/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToMany, DeleteDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToMany, DeleteDateColumn, OneToOne } from 'typeorm';
+import { FolderSettingsEntity } from 'src/folder-settings/entities/folder-settings.entity';
 
 @Entity('folders')
 export class FolderEntity {
@@ -33,6 +34,9 @@ export class FolderEntity {
 
   @OneToMany(() => ClientEntity, (client) => client.folder)
   clients: ClientEntity[];
+
+  @OneToOne(() => FolderSettingsEntity, settings => settings.folder, { cascade: true })
+  settings: FolderSettingsEntity;
 
   @DeleteDateColumn()
   deletedAt?: Date;
