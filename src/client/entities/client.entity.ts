@@ -15,4 +15,7 @@ export class ClientEntity {
   @ManyToOne(() => FolderEntity, folder => folder.clients)
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;
+
+  @Column({ type: 'boolean', default: false })
+  orderDigital: boolean;
 }

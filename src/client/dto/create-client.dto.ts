@@ -5,4 +5,6 @@ export class CreateClientDto {
     @IsNotEmpty()
     name: string;
     folderId: number;
+
+    orderDigital?: boolean;
   }

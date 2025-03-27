@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientEntity } from './entities/client.entity';
@@ -31,5 +31,16 @@ export class ClientsService {
     }));
     
     return this.repository.save(newClients);
+  }
+
+
+  async updateOrderDigital(clientId: number, orderDigital: boolean) {
+    const client = await this.repository.findOne({ where: { id: clientId } });
+    if (!client) {
+      throw new NotFoundException('Клиент не найден');
+    }
+    
+    client.orderDigital = orderDigital;
+    return this.repository.save(client);
   }
 }
