@@ -15,6 +15,11 @@ async function bootstrap() {
         res.set('Access-Control-Allow-Origin', `http://localhost:${process.env.CLIENT_PORT}`);
     }
 }));
+  app.use('/watermarks', express.static('watermarks', {
+    setHeaders: (res) => {
+        res.set('Access-Control-Allow-Origin', `http://localhost:${process.env.CLIENT_PORT}`);
+    }
+}));
   app.setGlobalPrefix('api');
   app.enableCors({ credentials: true, origin: true });
   // disable cors for local development

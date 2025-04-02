@@ -9,6 +9,7 @@ import { ClientsModule } from './client/clients.module';
 import { SizeModule } from './sizes/sizes.module';
 import { OrdersModule } from './orders/orders.module';
 import { FolderSettingsModule } from './folder-settings/folder-settings.module';
+import { WatermarksModule } from './watermarks/watermarks.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { FolderSettingsModule } from './folder-settings/folder-settings.module';
     SizeModule,
     OrdersModule,
     FolderSettingsModule,
+    WatermarksModule,
   ],
 })
 export class AppModule {}
