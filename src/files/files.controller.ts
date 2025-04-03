@@ -18,13 +18,18 @@ import { fileStorage } from './storage';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/auth/decorators/user-id.decorator';
 import { FileType } from './entities/file.entity';
+import { WatermarksService } from 'src/watermarks/watermarks.service';
+import * as path from 'path';
 
 @Controller('files')
 @ApiTags('files')
 @UseGuards(JwtAuthGuard )
 @ApiBearerAuth()
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService, 
+    private readonly watermarkService: WatermarksService
+  ) {}
 
 @Get()
 @ApiOperation({ summary: 'Get files list' })
@@ -58,7 +63,7 @@ async findAll(
       },
     },
   })
-  create(@UploadedFile(
+  async create(@UploadedFile(
     new ParseFilePipe({
       validators: [
         new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
@@ -68,7 +73,23 @@ async findAll(
    @UserId() userId: number,
    @Query('folderId') folderId: string
   ) {
-    return this.filesService.create(file, userId, folderId);
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    
+    let savedFile 
+    
+    if (imageExtensions.includes(fileExtension)) {
+        const updatedFileName = await this.watermarkService.applyWatermark(file.path, userId);
+  
+        if (updatedFileName !== file.path.split('/')[1]) {
+          savedFile = await this.filesService.create(
+            file, 
+            folderId, 
+            updatedFileName,
+            );
+        }
+    } 
+    return savedFile;
   }
 
   @Delete()

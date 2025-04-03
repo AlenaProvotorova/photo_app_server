@@ -35,8 +35,9 @@ export class WatermarkEntity {
   userId: number;
   
   @ManyToOne(() => UserEntity, user => user.watermarks, {
-    onDelete: 'CASCADE'
+  onDelete: 'CASCADE'
   })
+
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
@@ -47,4 +48,7 @@ export class WatermarkEntity {
   generateUrl() {
     this.url = `${API_CONFIG.baseUrl}${API_CONFIG.watermarksPath}/${this.filename}`;
   }
+
+  @Column()
+  path: string; 
 }

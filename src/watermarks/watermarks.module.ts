@@ -10,5 +10,6 @@ import { WatermarksService } from './watermarks.service';
   ],
   controllers: [WatermarksController],
   providers: [WatermarksService],
+  exports: [WatermarksService],
 })
 export class WatermarksModule {}

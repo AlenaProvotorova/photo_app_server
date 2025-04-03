@@ -24,14 +24,18 @@ export class FilesService {
      return qb.getMany(); 
   }
 
-  create(file: Express.Multer.File, userId: number, folderId: string) {
+  create(file: Express.Multer.File, folderId: string, updatedPath: string) {
     const uploadPath = 'uploads';
     const folderPath = `${uploadPath}`;
     if (!existsSync(folderPath)) {
       mkdirSync(folderPath, { recursive: true });
     }
-    
-    const newPath = `${folderPath}/${file.filename}`;
+    let newPath = '';
+    if(updatedPath.includes(uploadPath)) {
+      newPath = updatedPath;
+    } else {
+      newPath = `${folderPath}/${updatedPath}`;
+    }
     renameSync(file.path, newPath);
 
       return this.repository.save({
@@ -39,8 +43,8 @@ export class FilesService {
       originalName: file.originalname,
       size: file.size,
       mimetype: file.mimetype,
-      userId: userId,
       folderId: folderId,
+      path: newPath,
     });
   }
 
@@ -53,4 +57,9 @@ export class FilesService {
     .execute();
     return qb;
   } 
+
+  async updatePath(fileId: number, newPath: string): Promise<FileEntity> {
+    await this.repository.update(fileId, { path: newPath });
+    return this.repository.findOneOrFail({ where: { id: fileId } });
+  }
 }

@@ -38,13 +38,16 @@ export class FileEntity {
   folderId: string;
   
   @ManyToOne(() => FolderEntity, folder => folder.files, {
-    onDelete: 'CASCADE'
+  onDelete: 'CASCADE'
   })
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;
 
   @DeleteDateColumn()
   deletedAt?: string;
+
+  @Column()
+  path: string;
 
   @AfterLoad()
   generateUrl() {
