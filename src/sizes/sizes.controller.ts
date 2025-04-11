@@ -3,6 +3,7 @@ import { CreateSizeDto } from './dto/create-size.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SizeService } from './sizes.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('sizes')
 @ApiTags('sizes')
@@ -16,6 +17,7 @@ export class SizeController {
     return this.sizeService.create(dto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.sizeService.findAll();

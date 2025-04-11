@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { fileStorage } from './storage';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/auth/decorators/user-id.decorator';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { FileType } from './entities/file.entity';
 import { WatermarksService } from 'src/watermarks/watermarks.service';
 import * as path from 'path';
@@ -31,6 +32,7 @@ export class FilesController {
     private readonly watermarkService: WatermarksService
   ) {}
 
+@Public()
 @Get()
 @ApiOperation({ summary: 'Get files list' })
 @ApiQuery({ name: 'type', required: false, enum: FileType })
@@ -38,12 +40,11 @@ export class FilesController {
 @ApiResponse({ status: 200, description: 'Returns files list' })
 @ApiResponse({ status: 500, description: 'Internal server error' })
 async findAll(
-    @UserId() userId: number,
     @Query('type') fileType: FileType,
     @Query('folderId') folderId: number
 ) {
     try {
-        return await this.filesService.findAll(userId, fileType, folderId);
+        return await this.filesService.findAll( fileType, folderId);
     } catch (error) {
         console.error('Controller error:', error);
         throw new InternalServerErrorException(error.message);

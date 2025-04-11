@@ -18,6 +18,10 @@ export class ClientsService {
     });
   }
 
+  async getClientById(clientId: number): Promise<ClientEntity> {
+    return this.repository.findOne({ where: { id: clientId } });
+  }
+
   async updateClientsList(folderId: number, clients: CreateClientDto[]): Promise<ClientEntity[]> {
     if (clients.some(client => !client.name)) {
       throw new Error('Client name is required');

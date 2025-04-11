@@ -18,6 +18,7 @@ import { fileStorage } from './storage';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/auth/decorators/user-id.decorator';
 
+
 @Controller('watermarks')
 @ApiTags('watermarks')
 @UseGuards(JwtAuthGuard )

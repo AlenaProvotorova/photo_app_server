@@ -12,6 +12,11 @@ export class ClientsController {
     return this.clientsService.getAllClients(+folderId);
   }
 
+  @Get(':clientId')
+  getClientById(@Param('clientId') clientId: string) {
+    return this.clientsService.getClientById(+clientId);
+  }
+
   @Put('folder/:folderId')
   updateClientsList(
     @Param('folderId') folderId: string,

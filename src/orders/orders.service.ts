@@ -15,7 +15,7 @@ export class OrdersService {
     private repository: Repository<OrderEntity>,
   ) {}
 
-  async createOrUpdate(createOrderDto: CreateOrderDto): Promise<OrderEntity> {
+  async createOrUpdate(createOrderDto: CreateOrderDto): Promise<OrderEntity | void> {
     const existingOrder = await this.repository.findOne({
       where: {
         fileId: createOrderDto.fileId,
@@ -24,6 +24,14 @@ export class OrdersService {
         sizeId: createOrderDto.sizeId
       }
     });
+
+    if (createOrderDto.count === 0) {
+      if (existingOrder) {
+        await this.repository.remove(existingOrder);
+        return;
+      }
+      return;
+    }
 
     if (existingOrder) {
       existingOrder.count = createOrderDto.count;

@@ -11,7 +11,7 @@ export class FilesService {
     private repository: Repository<FileEntity>,
     ) {}
 
-  findAll(userId: number, fileType: FileType, folderId: number) {
+  findAll(fileType: FileType, folderId: number) {
     const qb = this.repository.createQueryBuilder('file');  
 
      qb.where('file.folderId = :folderId', { folderId })  
