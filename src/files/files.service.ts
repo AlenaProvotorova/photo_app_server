@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity, FileType } from './entities/file.entity';
 import { Repository } from 'typeorm';
-import { mkdirSync, renameSync, existsSync } from 'fs';
+import { mkdirSync, renameSync, existsSync, unlinkSync } from 'fs';
 
 @Injectable()
 export class FilesService {
@@ -48,8 +48,15 @@ export class FilesService {
     });
   }
 
-   remove( ids: string, folderId: number) {
+  async remove(ids: string, folderId: number) {
     const idsArray = ids.split(',')
+    for (const id of idsArray) {
+      const file = await this.repository.findOneOrFail({ where: { id: Number(id) } });
+      const filePath = `uploads/${file.filename}`;
+      if (existsSync(filePath)) {
+        unlinkSync(filePath);
+      }
+    }
     const qb =  this.repository
     .createQueryBuilder('file')
     .where('id IN(:...ids) AND folderId = :folderId', { ids: idsArray, folderId })

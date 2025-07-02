@@ -44,4 +44,24 @@ export class ClientsController {
   ) {
     return this.clientsService.updateOrderDigital(+clientId, orderDigital);
   }
+  
+  @Put(':clientId/order-album')
+  @ApiParam({ name: 'clientId', description: 'ID клиента' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        orderAlbum: {
+          type: 'boolean',
+          description: 'Значение для обновления orderAlbum',
+        },
+      },
+    },
+  })
+  updateOrderAlbum(
+    @Param('clientId') clientId: string,
+    @Body('orderAlbum') orderAlbum: boolean
+  ) {
+    return this.clientsService.updateOrderAlbum(+clientId, orderAlbum);
+  }
   }

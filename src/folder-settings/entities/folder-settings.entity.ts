@@ -9,32 +9,26 @@ export class FolderSettingsEntity {
   @Column()
   folderId: number;
 
-  @Column({ default: false })
-  showSelectAllDigital: boolean;
+  @Column('jsonb')
+  showSelectAllDigital: object;
 
-  @Column({ default: false })
-  showPhotoOne: boolean;
+  @Column('jsonb')
+  photoOne: object;
 
-  @Column({ default: false })
-  showPhotoTwo: boolean;
+  @Column('jsonb')
+  photoTwo: object;
+ 
+  @Column('jsonb')
+  photoThree: object;
 
-  @Column({ default: false })
-  showSize1: boolean;
+  @Column('jsonb')
+  sizeOne: object;
 
-  @Column({ default: false })
-  showSize2: boolean;
+  @Column('jsonb')
+  sizeTwo: object;
 
-  @Column({ default: false })
-  showSize3: boolean;
-
-  @Column({ nullable: true })
-  sizeDescription1: string;
-
-  @Column({ nullable: true })
-  sizeDescription2: string;
-
-  @Column({ nullable: true })
-  sizeDescription3: string;
+  @Column('jsonb')
+  sizeThree: object;
 
   @OneToOne(() => FolderEntity)
   @JoinColumn({ name: 'folderId' })

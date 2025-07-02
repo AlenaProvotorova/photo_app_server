@@ -47,4 +47,14 @@ export class ClientsService {
     client.orderDigital = orderDigital;
     return this.repository.save(client);
   }
+
+  async updateOrderAlbum(clientId: number, orderAlbum: boolean) {
+    const client = await this.repository.findOne({ where: { id: clientId } });
+    if (!client) {
+      throw new NotFoundException('Клиент не найден');
+    }
+    
+    client.orderAlbum = orderAlbum;
+    return this.repository.save(client);
+  }
 }

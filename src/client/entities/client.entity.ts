@@ -18,4 +18,7 @@ export class ClientEntity {
 
   @Column({ type: 'boolean', default: false })
   orderDigital: boolean;
+
+  @Column({ type: 'boolean', nullable: true, default: null })
+  orderAlbum: boolean;
 }
