@@ -20,15 +20,19 @@ async function bootstrap() {
         res.set('Access-Control-Allow-Origin', `http://localhost:${process.env.CLIENT_PORT}`);
     }
 }));
+
   app.setGlobalPrefix('api');
-  app.enableCors({ credentials: true, origin: true });
-  // disable cors for local development
-  app.use(cors({
-    origin: `http://localhost:${process.env.CLIENT_PORT}`, 
-    credentials: true, 
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  });
+ 
   
   const config = new DocumentBuilder()
   .setTitle('Облачное хранилище')
