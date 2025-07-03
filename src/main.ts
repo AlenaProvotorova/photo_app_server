@@ -23,15 +23,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
-        console.log('[CORS] Разрешен origin:', origin);
-        callback(null, true);
-      } else {
-        console.log('[CORS] Отклонен origin:', origin);
-        callback(new Error('CORS not allowed'));
-      }
-    },
+    origin: true,
     credentials: true,
   });
  
