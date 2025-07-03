@@ -8,7 +8,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   app.use('/uploads', express.static('uploads', {
     setHeaders: (res) => {
@@ -25,14 +25,14 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+        console.log('[CORS] Разрешен origin:', origin);
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.log('[CORS] Отклонен origin:', origin);
+        callback(new Error('CORS not allowed'));
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
   });
  
   
@@ -47,6 +47,7 @@ async function bootstrap() {
       persistAuthorization: true,
     },
   });
+  console.log('[SERVER] Стартуем на порту', process.env.PORT ?? 3000);
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
