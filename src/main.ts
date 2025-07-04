@@ -12,12 +12,12 @@ async function bootstrap() {
   // app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   app.use('/uploads', express.static('uploads', {
     setHeaders: (res) => {
-        res.set('Access-Control-Allow-Origin', `http://localhost:${process.env.CLIENT_PORT}`);
+        res.set('Access-Control-Allow-Origin', '*');
     }
 }));
   app.use('/watermarks', express.static('watermarks', {
     setHeaders: (res) => {
-        res.set('Access-Control-Allow-Origin', `http://localhost:${process.env.CLIENT_PORT}`);
+        res.set('Access-Control-Allow-Origin', '*');
     }
 }));
 
