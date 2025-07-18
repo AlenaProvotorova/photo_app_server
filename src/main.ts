@@ -24,10 +24,9 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: true,
+    origin: 'http://localhost:3001', 
     credentials: true,
   });
- 
   
   const config = new DocumentBuilder()
   .setTitle('Облачное хранилище')
