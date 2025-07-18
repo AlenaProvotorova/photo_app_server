@@ -15,6 +15,7 @@ async function bootstrap() {
         res.set('Access-Control-Allow-Origin', '*');
     }
 }));
+//test
   app.use('/watermarks', express.static('watermarks', {
     setHeaders: (res) => {
         res.set('Access-Control-Allow-Origin', '*');
