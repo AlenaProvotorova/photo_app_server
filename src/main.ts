@@ -27,7 +27,7 @@ async function bootstrap() {
   // disable cors for local development
   app.use(cors({
     origin: `http://localhost:3001`, 
-    credentials: true, 
+    credentials: false, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
