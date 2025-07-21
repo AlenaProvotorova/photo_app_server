@@ -23,11 +23,14 @@ async function bootstrap() {
 }));
 
   app.setGlobalPrefix('api');
-  app.enableCors({
-    origin: 'http://localhost:3001', 
-    credentials: true,
-  });
-  
+  app.enableCors({ credentials: true, origin: true });
+  // disable cors for local development
+  app.use(cors({
+    origin: `http://localhost:${process.env.CLIENT_PORT}`, 
+    credentials: true, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
   const config = new DocumentBuilder()
   .setTitle('Облачное хранилище')
   .setVersion('1.0')
