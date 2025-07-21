@@ -23,7 +23,7 @@ async function bootstrap() {
 }));
 
   app.setGlobalPrefix('api');
-  app.enableCors({ credentials: true, origin: true });
+  // app.enableCors({ credentials: true, origin: true });
   // disable cors for local development
   app.use(cors({
     origin: `http://localhost:3001`, 
