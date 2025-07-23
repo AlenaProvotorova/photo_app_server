@@ -26,8 +26,8 @@ async function bootstrap() {
   // app.enableCors({ credentials: true, origin: true });
   // disable cors for local development
   app.use(cors({
-    origin: `https://stalwart-mooncake-ddf369.netlify.app/`, 
-    credentials: false, 
+    origin:[ `http://localhost:3001`, `https://stalwart-mooncake-ddf369.netlify.app/`], 
+    credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
