@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from 'cloudinary';
-// @ts-expect-error why
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import * as multer from 'multer';
 
