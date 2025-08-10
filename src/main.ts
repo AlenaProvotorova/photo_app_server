@@ -3,11 +3,18 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cors from 'cors';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { v2 as cloudinary } from 'cloudinary';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api');
+
+  cloudinary.config({
+    cloud_name: 'drbbjhvtd',
+    api_key: '434371935367288',
+    api_secret: 'J_WxpkfjQnJNxmPeRVN2YiBzdus',
+  });
 
   app.use(
     cors({
@@ -21,8 +28,6 @@ async function bootstrap() {
       allowedHeaders: ['Content-Type', 'Authorization'],
     }),
   );
-
-  ///jj
 
   const config = new DocumentBuilder()
     .setTitle('Облачное хранилище')
