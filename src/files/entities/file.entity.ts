@@ -17,7 +17,7 @@ export enum FileType {
 
 @Entity('files')
 export class FileEntity {
-  url: string; 
+  url: string;
 
   @PrimaryGeneratedColumn()
   id: number;
@@ -36,9 +36,9 @@ export class FileEntity {
 
   @Column({ nullable: true, name: 'folderId' })
   folderId: string;
-  
-  @ManyToOne(() => FolderEntity, folder => folder.files, {
-  onDelete: 'CASCADE'
+
+  @ManyToOne(() => FolderEntity, (folder) => folder.files, {
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;
