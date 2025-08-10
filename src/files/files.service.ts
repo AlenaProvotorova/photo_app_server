@@ -25,7 +25,7 @@ export class FilesService {
     return qb.getMany();
   }
 
-  async uploadToCloudinaryAndSave(
+  async create(
     file: Express.Multer.File,
     folderId: number,
   ): Promise<FileEntity> {
