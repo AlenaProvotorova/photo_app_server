@@ -1,8 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary';
+// @ts-expect-error why
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import * as multer from 'multer';
 
-// Настройка Cloudinary (данные возьмутся из .env)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -19,13 +19,12 @@ export const fileStorage = new CloudinaryStorage({
       .join('');
 
     return {
-      folder: 'uploads', // папка в Cloudinary
+      folder: 'uploads',
       public_id: publicId,
-      format: fileExtName, // оставляем оригинальное расширение
+      format: fileExtName,
       resource_type: 'image',
     };
   },
 });
 
-// Теперь fileStorage можно использовать в multer:
 export const upload = multer({ storage: fileStorage });
