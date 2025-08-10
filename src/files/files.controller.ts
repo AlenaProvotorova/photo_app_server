@@ -96,11 +96,7 @@ export class FilesController {
       );
 
       if (updatedFileName !== file.path.split('/')[1]) {
-        savedFile = await this.filesService.create(
-          file,
-          folderId,
-          updatedFileName,
-        );
+        savedFile = await this.filesService.create(file, folderId);
       }
     }
     return savedFile;

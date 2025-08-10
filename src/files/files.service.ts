@@ -27,7 +27,7 @@ export class FilesService {
 
   async create(
     file: Express.Multer.File,
-    folderId: number,
+    folderId: string,
   ): Promise<FileEntity> {
     if (!file) {
       throw new InternalServerErrorException('Файл не передан');
