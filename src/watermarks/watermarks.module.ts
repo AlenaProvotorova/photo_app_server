@@ -5,9 +5,7 @@ import { WatermarksController } from './watermarks.controller';
 import { WatermarksService } from './watermarks.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([WatermarkEntity]),
-  ],
+  imports: [TypeOrmModule.forFeature([WatermarkEntity])],
   controllers: [WatermarksController],
   providers: [WatermarksService],
   exports: [WatermarksService],

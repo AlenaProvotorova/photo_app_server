@@ -38,22 +38,16 @@ export class WatermarksController {
   @ApiQuery({ name: 'type', required: false })
   @ApiQuery({ name: 'folderId', required: false })
   @ApiResponse({ status: 200, description: 'Returns files list' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
   async findAll(@UserId() userId: number) {
     try {
       return await this.watermarksService.find(userId);
     } catch (error) {
-      console.error('Controller error:', error);
       throw new InternalServerErrorException(error.message);
     }
   }
 
   @Post()
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: fileStorage,
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { storage: fileStorage }))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -66,7 +60,7 @@ export class WatermarksController {
   create(
     @UploadedFile(
       new ParseFilePipe({
-        validators: [new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 })],
+        validators: [new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 })],
       }),
     )
     file: Express.Multer.File,
