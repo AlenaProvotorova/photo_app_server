@@ -4,11 +4,16 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cors from 'cors';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
+import fetch from 'node-fetch';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api');
+
+  if (!globalThis.fetch) {
+    globalThis.fetch = fetch;
+  }
 
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

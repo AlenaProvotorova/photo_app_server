@@ -30,36 +30,56 @@ export class FilesService {
     folderId: string,
   ): Promise<FileEntity> {
     if (!file) {
-      throw new InternalServerErrorException('Файл не передан');
+          throw new InternalServerErrorException('File not passed');
     }
 
     try {
-      const result = await cloudinary.uploader.upload(file.path, {
-        folder: folderId.toString(),
-        resource_type: 'auto',
-      });
-
-      if (existsSync(file.path)) {
-        unlinkSync(file.path);
+      
+      const filename = file.filename || `file_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      const cleanOriginalName = file.originalname
+        .replace(/[^\x00-\x7F]/g, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .substring(0, 255);
+    
+      let result;
+      if (file.buffer) {
+        result = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.buffer.toString('base64')}`, {
+          folder: folderId.toString(),
+          resource_type: 'auto',
+          public_id: filename,
+        });
+      } else if (file.path) {
+        result = await cloudinary.uploader.upload(file.path, {
+          folder: folderId.toString(),
+          resource_type: 'auto',
+          public_id: filename,
+        });
+        
+        if (existsSync(file.path)) {
+          unlinkSync(file.path);
+        }
+      } else {
+        throw new InternalServerErrorException('No file data to load');
       }
 
       const savedFile = await this.repository.save({
-        filename: file.filename,
-        originalName: file.originalname,
+        filename: result.public_id, 
+        originalName: cleanOriginalName, 
         size: file.size,
         mimetype: file.mimetype,
         folderId: folderId.toString(),
         path: result.secure_url,
+        url: result.secure_url,
       });
 
       return savedFile;
     } catch (error) {
-      if (file && existsSync(file.path)) {
+      if (file && file.path && existsSync(file.path)) {
         unlinkSync(file.path);
       }
 
-      console.error('Ошибка загрузки в Cloudinary:', error);
-      throw new InternalServerErrorException('Ошибка загрузки файла');
+      throw new InternalServerErrorException('Error loading file');
     }
   }
 
@@ -69,6 +89,15 @@ export class FilesService {
       const file = await this.repository.findOneOrFail({
         where: { id: Number(id) },
       });
+      
+      if (file.filename && !file.path.startsWith('uploads/')) {
+        try {
+          await cloudinary.uploader.destroy(file.filename);
+        } catch (error) {
+          console.error(`Error deleting file from Cloudinary: ${error.message}`);
+        }
+      }
+      
       if (file.path && file.path.startsWith('uploads/')) {
         if (existsSync(file.path)) {
           unlinkSync(file.path);

@@ -6,6 +6,7 @@ import { CreateFolderDto } from './dto/create-folder.dto';
 import { UpdateFolderDto } from './dto/update-folder.dto';
 import { randomBytes } from 'crypto';
 import { FolderSettingsService } from 'src/folder-settings/folder-settings.service';
+import { v2 as cloudinary } from 'cloudinary';
 
 @Injectable()
 export class FolderService {
@@ -81,6 +82,27 @@ export class FolderService {
   async remove(id: number, userId: number) {
     const folder = await this.findOne(id, userId);
     
-    return this.repository.remove(folder);
+    try {
+      const resources = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: folder.id.toString(),
+        max_results: 500
+      });
+      
+      if (resources.resources && resources.resources.length > 0) {
+        const publicIds = resources.resources.map(resource => resource.public_id);
+        await cloudinary.api.delete_resources(publicIds);
+      }
+      
+      try {
+        await cloudinary.api.delete_folder(folder.id.toString());
+      } catch (folderError) {
+        console.log(`Folder ${folder.id} already deleted or does not exist`);
+      }
+    } catch (error) {
+      console.error(`Error deleting folder from Cloudinary:`, error);
+    }
+    
+    return this.repository.softDelete(id);
   }
 }

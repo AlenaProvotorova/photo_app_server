@@ -29,6 +29,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { FileType } from './entities/file.entity';
 import { WatermarksService } from 'src/watermarks/watermarks.service';
 import * as path from 'path';
+import * as multer from 'multer';
 
 @Controller('files')
 @ApiTags('files')
@@ -54,7 +55,6 @@ export class FilesController {
     try {
       return await this.filesService.findAll(fileType, folderId);
     } catch (error) {
-      console.error('Controller error:', error);
       throw new InternalServerErrorException(error.message);
     }
   }
@@ -62,7 +62,7 @@ export class FilesController {
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: fileStorage,
+      storage: multer.memoryStorage(),
     }),
   )
   @ApiConsumes('multipart/form-data')
@@ -90,15 +90,41 @@ export class FilesController {
     let savedFile;
 
     if (imageExtensions.includes(fileExtension)) {
-      const updatedFileName = await this.watermarkService.applyWatermark(
-        file.path,
-        userId,
-      );
-
-      if (updatedFileName !== file.path.split('/')[1]) {
-        savedFile = await this.filesService.create(file, folderId);
+      const tempPath = `uploads/temp_${Date.now()}_${file.originalname}`;
+      
+      const fs = require('fs');
+      fs.writeFileSync(tempPath, file.buffer);
+      
+      try {
+        const watermarkedPath = await this.watermarkService.applyWatermark(
+          tempPath,
+          userId,
+        );
+        
+        const watermarkedFile = {
+          ...file,
+          path: watermarkedPath,
+          buffer: fs.readFileSync(watermarkedPath)
+        };
+        
+        savedFile = await this.filesService.create(watermarkedFile, folderId);
+        
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath);
+        }
+        if (fs.existsSync(watermarkedPath) && watermarkedPath !== tempPath) {
+          fs.unlinkSync(watermarkedPath);
+        }
+      } catch (error) {
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath);
+        }
+        throw error;
       }
+    } else {
+      savedFile = await this.filesService.create(file, folderId);
     }
+
     return savedFile;
   }
 

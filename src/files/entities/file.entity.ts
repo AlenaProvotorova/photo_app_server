@@ -1,7 +1,5 @@
-import { API_CONFIG } from '../../config/api.config';
 import { FolderEntity } from '../../folders/entities/folder.entity';
 import {
-  AfterLoad,
   Column,
   DeleteDateColumn,
   Entity,
@@ -17,8 +15,6 @@ export enum FileType {
 
 @Entity('files')
 export class FileEntity {
-  url: string;
-
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -49,8 +45,6 @@ export class FileEntity {
   @Column()
   path: string;
 
-  @AfterLoad()
-  generateUrl() {
-    this.url = `${API_CONFIG.baseUrl}${API_CONFIG.uploadsPath}/${this.filename}`;
-  }
+  @Column()
+  url: string;
 }
