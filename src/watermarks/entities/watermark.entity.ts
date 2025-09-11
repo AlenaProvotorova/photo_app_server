@@ -19,7 +19,7 @@ export class WatermarkEntity {
   @Column()
   originalName: string;
 
-  @Column()
+  @Column({ nullable: true })
   fileSize: number;
 
   @Column()
