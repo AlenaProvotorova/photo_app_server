@@ -67,7 +67,6 @@ export class FolderSettingsService {
     if (!settings) {
       throw new NotFoundException('Settings not found');
     }
-    console.log('updateSettingsDto', updateSettingsDto);
     const { settingName, newName, show, ...otherUpdates } = updateSettingsDto;
 
     if (settingName && newName) {

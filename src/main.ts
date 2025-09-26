@@ -10,48 +10,38 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   
-  // Включаем CORS глобально с поддержкой Flutter и мобильных приложений
   app.enableCors({
     origin: (origin, callback) => {
-      // Разрешаем запросы без origin (мобильные приложения, Postman, etc.)
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
-        'http://localhost:3000',
         'http://localhost:3001',
-        'http://localhost:5173',
-        'http://localhost:8080',
-        'http://localhost:8081', // Flutter web default port
-        'http://localhost:8082', // Additional Flutter port
+        'http://localhost:3000',
         'http://127.0.0.1:3000',
-        'http://127.0.0.1:3001',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:8080',
-        'http://127.0.0.1:8081', // Flutter web default port
-        'http://127.0.0.1:8082', // Additional Flutter port
         'https://stalwart-mooncake-ddf369.netlify.app',
         'https://photoappserver-production.up.railway.app',
-        'https://your-frontend-domain.com', // замените на ваш домен
-        // Railway URLs
+        'https://fastselect.ru', 
         process.env.RAILWAY_STATIC_URL,
         process.env.RAILWAY_PUBLIC_DOMAIN,
-      ].filter(Boolean); // Убираем undefined значения
+      ].filter(Boolean); 
       
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       
-      // Для разработки разрешаем все localhost и 127.0.0.1
       if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
         if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-          console.log(`[CORS] Allowing development origin: ${origin}`);
           return callback(null, true);
         }
       }
       
-      // Разрешаем Flutter web приложения (обычно работают на портах 8080+)
+      // Allow desktop Flutter apps and local development
       if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1):(808[0-9]|300[0-9]|517[0-9])$/)) {
-        console.log(`[CORS] Allowing Flutter web origin: ${origin}`);
+        return callback(null, true);
+      }
+      
+      // Allow requests without origin (desktop apps, mobile apps, etc.)
+      if (!origin || origin === 'null') {
         return callback(null, true);
       }
       
@@ -84,15 +74,12 @@ async function bootstrap() {
     globalThis.fetch = fetch;
   }
 
-  // Добавляем middleware для логирования CORS запросов
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     const method = req.method;
     const url = req.url;
     
-    console.log(`[CORS] ${method} ${url} from ${origin || 'no-origin'}`);
     
-    // Добавляем дополнительные заголовки для Flutter
     res.header('Access-Control-Allow-Origin', origin || '*');
     res.header('Access-Control-Allow-Credentials', 'true');
     
@@ -119,7 +106,6 @@ async function bootstrap() {
     },
   });
 
-  // Добавляем endpoint для проверки CORS
   app.use('/api/health', (req, res) => {
     res.json({
       status: 'OK',
@@ -134,12 +120,6 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   const host = process.env.RAILWAY_STATIC_URL ? '0.0.0.0' : 'localhost';
-  
-  console.log(`[SERVER] Стартуем на ${host}:${port}`);
-  console.log(`[SERVER] CORS настроен для Flutter и мобильных приложений`);
-  console.log(`[SERVER] Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`[SERVER] Railway URL: ${process.env.RAILWAY_STATIC_URL || 'local'}`);
-  console.log(`[SERVER] Health check: http://${host}:${port}/api/health`);
   
   await app.listen(port, host);
 }
