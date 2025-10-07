@@ -38,6 +38,6 @@ export class OrderEntity {
   folderId: string;
 
   @ManyToOne(() => FolderEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'folderId' })
+  @JoinColumn({ name: 'folderId', referencedColumnName: 'url' })
   folder: FolderEntity;
 }

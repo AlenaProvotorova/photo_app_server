@@ -73,7 +73,8 @@ export class WatermarksService {
     });
     
     if (!activeWatermark) {
-      throw new NotFoundException('Active watermark not found');
+      // Если активный водяной знак не найден, возвращаем исходное изображение
+      return imagePath;
     }
 
     try {
