@@ -8,7 +8,6 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { randomBytes } from 'crypto';
 import { FileEntity } from '../files/entities/file.entity';
-import { SizeEntity } from '../sizes/entities/size.entity';
 import { ClientEntity } from '../client/entities/client.entity';
 import { FolderEntity } from '../folders/entities/folder.entity';
 
@@ -19,8 +18,6 @@ export class OrdersService {
     private repository: Repository<OrderEntity>,
     @InjectRepository(FileEntity)
     private fileRepository: Repository<FileEntity>,
-    @InjectRepository(SizeEntity)
-    private sizeRepository: Repository<SizeEntity>,
     @InjectRepository(ClientEntity)
     private clientRepository: Repository<ClientEntity>,
     @InjectRepository(FolderEntity)
@@ -36,7 +33,7 @@ export class OrdersService {
         fileId: createOrderDto.fileId,
         clientId: createOrderDto.clientId,
         folderId: createOrderDto.folderId,
-        format: createOrderDto.format
+        formatName: createOrderDto.formatName,
       }
     });
 
@@ -58,18 +55,14 @@ export class OrdersService {
   }
 
   private async validateReferences(dto: CreateOrderDto): Promise<void> {
-    const [file, size, client, folder] = await Promise.all([
+    const [file, client, folder] = await Promise.all([
       this.fileRepository.findOne({ where: { id: dto.fileId } }),
-      this.sizeRepository.findOne({ where: { id: dto.format } }),
       this.clientRepository.findOne({ where: { id: dto.clientId } }),
-      this.folderRepository.findOne({ where: { url: dto.folderId } }),
+      this.folderRepository.findOne({ where: { id: +dto.folderId } }),
     ]);
 
     if (!file) {
       throw new BadRequestException(`File with id ${dto.fileId} not found`);
-    }
-    if (!size) {
-      throw new BadRequestException(`Size with id ${dto.format} not found`);
     }
     if (!client) {
       throw new BadRequestException(`Client with id ${dto.clientId} not found`);
@@ -82,14 +75,14 @@ export class OrdersService {
   async findByFolderId(folderId: string): Promise<OrderEntity[]> {
     return await this.repository.find({
       where: { folderId },
-      relations: ['file', 'size', 'client']
+      relations: ['file', 'client']
     });
   }
 
   async findByFolderAndClient(folderId: string, clientId: number): Promise<OrderEntity[]> {
     return await this.repository.find({
       where: { folderId, clientId },
-      relations: ['file', 'size', 'client']
+      relations: ['file', 'client']
     });
   }
 

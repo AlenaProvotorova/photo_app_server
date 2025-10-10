@@ -5,9 +5,9 @@ export class CreateOrderDto {
   @IsNotEmpty()
   fileId: number;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  sizeId: number;
+  formatName: string;
 
   @IsNumber()
   @IsNotEmpty()

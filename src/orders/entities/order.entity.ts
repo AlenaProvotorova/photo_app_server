@@ -2,7 +2,6 @@ import { ClientEntity } from 'src/client/entities/client.entity';
 import { FileEntity } from '../../files/entities/file.entity';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { FolderEntity } from 'src/folders/entities/folder.entity';
-import { SizeEntity } from 'src/sizes/entities/size.entity';
 
 @Entity('orders')
 export class OrderEntity {
@@ -15,14 +14,6 @@ export class OrderEntity {
   @ManyToOne(() => FileEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'fileId' })
   file: FileEntity;
-
-
-  @Column({ name: 'sizeId' })
-  sizeId: number;
-
-  @ManyToOne(() => SizeEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'sizeId' })
-  size: SizeEntity;
 
   @Column()
   count: number;
@@ -38,6 +29,9 @@ export class OrderEntity {
   folderId: string;
 
   @ManyToOne(() => FolderEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'folderId', referencedColumnName: 'url' })
+  @JoinColumn({ name: 'folderId', referencedColumnName: 'id' })
   folder: FolderEntity;
+
+  @Column({ name: 'formatName' })
+  formatName: string;
 }
