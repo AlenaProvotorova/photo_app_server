@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
@@ -38,6 +38,10 @@ export class UserService {
       },
     });
   }
+
+  async findAll() {
+    return await this.userRepository.find();
+  }
  
   async findById(id: number) {
     return await this.userRepository.findOne({
@@ -46,7 +50,12 @@ export class UserService {
       },
     });
   }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
+
+
+  async updateIsAdmin(id: number, isAdmin: boolean) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    user.isAdmin = isAdmin;
+    return await this.userRepository.save(user);
+  }
 }
