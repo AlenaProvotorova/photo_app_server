@@ -58,7 +58,7 @@ export class OrdersService {
     const [file, client, folder] = await Promise.all([
       this.fileRepository.findOne({ where: { id: dto.fileId } }),
       this.clientRepository.findOne({ where: { id: dto.clientId } }),
-      this.folderRepository.findOne({ where: { id: +dto.folderId } }),
+      this.folderRepository.findOne({ where: { url: dto.folderId } }),
     ]);
 
     if (!file) {
