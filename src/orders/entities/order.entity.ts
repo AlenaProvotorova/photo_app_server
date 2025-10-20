@@ -26,7 +26,7 @@ export class OrderEntity {
   client: ClientEntity;
 
   @Column({ name: 'folderId' })
-  folderId: string;
+  folderId: number;
 
   @ManyToOne(() => FolderEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'folderId', referencedColumnName: 'id' })
