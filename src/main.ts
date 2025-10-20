@@ -106,22 +106,61 @@ async function bootstrap() {
     },
   });
 
-  app.use('/api/health', (req, res) => {
-    res.json({
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      cors: {
-        origin: req.headers.origin || 'no-origin',
-        method: req.method,
-        headers: req.headers
+  app.use('/api/health', async (req, res) => {
+    try {
+      // Проверяем подключение к базе данных
+      const dataSource = app.get('DataSource');
+      let dbStatus = 'unknown';
+      
+      try {
+        await dataSource.query('SELECT 1');
+        dbStatus = 'connected';
+      } catch (error) {
+        dbStatus = 'disconnected';
+        console.error('Database health check failed:', error.message);
       }
-    });
+
+      const healthData = {
+        status: dbStatus === 'connected' ? 'OK' : 'ERROR',
+        timestamp: new Date().toISOString(),
+        database: dbStatus,
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 3000,
+        cors: {
+          origin: req.headers.origin || 'no-origin',
+          method: req.method,
+        }
+      };
+
+      // Если база данных не подключена, возвращаем 503
+      if (dbStatus !== 'connected') {
+        return res.status(503).json(healthData);
+      }
+
+      res.json(healthData);
+    } catch (error) {
+      console.error('Health check error:', error);
+      res.status(500).json({
+        status: 'ERROR',
+        timestamp: new Date().toISOString(),
+        error: error.message
+      });
+    }
   });
 
   const port = process.env.PORT ?? 3000;
   const host = '0.0.0.0';
 
+  console.log(`🚀 Starting server on ${host}:${port}`);
+  console.log(`📊 Health check available at: http://${host}:${port}/api/health`);
+  console.log(`📚 Swagger docs available at: http://${host}:${port}/swagger`);
+  
   await app.listen(port, host);
+  
+  console.log(`✅ Server successfully started on ${host}:${port}`);
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});

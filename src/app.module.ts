@@ -18,16 +18,32 @@ import { WatermarksModule } from './watermarks/watermarks.module';
     AuthModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_NAME'),
-        synchronize: true,
-        entities: [__dirname + '/**/*.entity{.js, .ts}'],
-      }),
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get('DATABASE_URL');
+        
+        if (databaseUrl) {
+          // Railway PostgreSQL connection
+          return {
+            type: 'postgres',
+            url: databaseUrl,
+            synchronize: true,
+            entities: [__dirname + '/**/*.entity{.js, .ts}'],
+            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+          };
+        }
+        
+        // Local development connection
+        return {
+          type: 'postgres',
+          host: configService.get('DB_HOST', 'localhost'),
+          port: configService.get('DB_PORT', 5432),
+          username: configService.get('DB_USERNAME', 'postgres'),
+          password: configService.get('DB_PASSWORD', 'password'),
+          database: configService.get('DB_NAME', 'photoapp'),
+          synchronize: true,
+          entities: [__dirname + '/**/*.entity{.js, .ts}'],
+        };
+      },
       inject: [ConfigService],
     }),
     FilesModule,
