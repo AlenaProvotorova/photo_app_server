@@ -119,8 +119,8 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ?? 3000;
-  const host = process.env.RAILWAY_STATIC_URL ? '0.0.0.0' : 'localhost';
-  
+  const host = '0.0.0.0';
+
   await app.listen(port, host);
 }
 
