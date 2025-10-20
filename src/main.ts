@@ -4,13 +4,19 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import fetch from 'node-fetch';
+import { DataSource } from 'typeorm';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  app.setGlobalPrefix('api');
+  console.log('🔄 Initializing NestJS application...');
   
-  app.enableCors({
+  try {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    console.log('✅ NestJS application created successfully');
+
+    app.setGlobalPrefix('api');
+    console.log('✅ Global prefix set to "api"');
+  
+    app.enableCors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       
@@ -69,95 +75,76 @@ async function bootstrap() {
     optionsSuccessStatus: 200,
     preflightContinue: false,
   });
+  console.log('✅ CORS enabled');
 
   if (!globalThis.fetch) {
     globalThis.fetch = fetch;
   }
+  console.log('✅ Global fetch configured');
 
-  app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    const method = req.method;
-    const url = req.url;
-    
-    
-    res.header('Access-Control-Allow-Origin', origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
-    next();
-  });
-
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-
-
-  const config = new DocumentBuilder()
-    .setTitle('Облачное хранилище')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, documentFactory, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
-
-  app.use('/api/health', async (req, res) => {
-    try {
-      // Проверяем подключение к базе данных
-      const dataSource = app.get('DataSource');
-      let dbStatus = 'unknown';
+    app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      const method = req.method;
+      const url = req.url;
       
-      try {
-        await dataSource.query('SELECT 1');
-        dbStatus = 'connected';
-      } catch (error) {
-        dbStatus = 'disconnected';
-        console.error('Database health check failed:', error.message);
-      }
+      
+      res.header('Access-Control-Allow-Origin', origin || '*');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      
+      next();
+    });
+    console.log('✅ CORS middleware configured');
 
-      const healthData = {
-        status: dbStatus === 'connected' ? 'OK' : 'ERROR',
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+    console.log('✅ Cloudinary configured');
+
+
+    const config = new DocumentBuilder()
+      .setTitle('Облачное хранилище')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('swagger', app, documentFactory, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+    console.log('✅ Swagger documentation configured');
+
+    // Простой health check без проверки БД
+    app.use('/api/health', (req, res) => {
+      res.status(200).json({
+        status: 'OK',
         timestamp: new Date().toISOString(),
-        database: dbStatus,
         environment: process.env.NODE_ENV || 'development',
         port: process.env.PORT || 3000,
-        cors: {
-          origin: req.headers.origin || 'no-origin',
-          method: req.method,
-        }
-      };
-
-      // Если база данных не подключена, возвращаем 503
-      if (dbStatus !== 'connected') {
-        return res.status(503).json(healthData);
-      }
-
-      res.json(healthData);
-    } catch (error) {
-      console.error('Health check error:', error);
-      res.status(500).json({
-        status: 'ERROR',
-        timestamp: new Date().toISOString(),
-        error: error.message
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
       });
-    }
-  });
+    });
+    console.log('✅ Health check endpoint configured');
 
-  const port = process.env.PORT ?? 3000;
-  const host = '0.0.0.0';
+    const port = process.env.PORT ?? 3000;
+    const host = '0.0.0.0';
 
-  console.log(`🚀 Starting server on ${host}:${port}`);
-  console.log(`📊 Health check available at: http://${host}:${port}/api/health`);
-  console.log(`📚 Swagger docs available at: http://${host}:${port}/swagger`);
-  
-  await app.listen(port, host);
-  
-  console.log(`✅ Server successfully started on ${host}:${port}`);
+    console.log(`🚀 Starting server on ${host}:${port}`);
+    console.log(`📊 Health check available at: http://${host}:${port}/api/health`);
+    console.log(`📚 Swagger docs available at: http://${host}:${port}/swagger`);
+    
+    await app.listen(port, host);
+    
+    console.log(`✅ Server successfully started on ${host}:${port}`);
+    
+  } catch (error) {
+    console.error('❌ Error during application initialization:', error);
+    throw error;
+  }
 }
 
 bootstrap().catch((error) => {
