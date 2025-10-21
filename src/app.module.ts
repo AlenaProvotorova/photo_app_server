@@ -29,6 +29,18 @@ import { WatermarksModule } from './watermarks/watermarks.module';
             synchronize: true,
             entities: [__dirname + '/**/*.entity{.js, .ts}'],
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+            // Railway-specific connection settings
+            connectTimeoutMS: 60000,
+            acquireTimeoutMS: 60000,
+            timeout: 60000,
+            extra: {
+              connectionTimeoutMillis: 60000,
+              idleTimeoutMillis: 30000,
+              max: 20,
+            },
+            logging: process.env.NODE_ENV === 'development',
+            retryAttempts: 3,
+            retryDelay: 3000,
           };
         }
         
@@ -42,6 +54,7 @@ import { WatermarksModule } from './watermarks/watermarks.module';
           database: configService.get('DB_NAME', 'photoapp'),
           synchronize: true,
           entities: [__dirname + '/**/*.entity{.js, .ts}'],
+          logging: process.env.NODE_ENV === 'development',
         };
       },
       inject: [ConfigService],

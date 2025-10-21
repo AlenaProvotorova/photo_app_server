@@ -126,6 +126,8 @@ async function bootstrap() {
         port: process.env.PORT || 3000,
         uptime: process.uptime(),
         memory: process.memoryUsage(),
+        database: process.env.DATABASE_URL ? 'configured' : 'not configured',
+        version: '1.0.0',
       });
     });
     console.log('✅ Health check endpoint configured');
