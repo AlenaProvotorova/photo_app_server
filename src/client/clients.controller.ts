@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Body } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Body } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -64,4 +64,14 @@ export class ClientsController {
   ) {
     return this.clientsService.updateOrderAlbum(+clientId, orderAlbum);
   }
+
+  @Delete('folder/:folderId/name/:clientName')
+  @ApiParam({ name: 'folderId', description: 'ID папки' })
+  @ApiParam({ name: 'clientName', description: 'Имя клиента для удаления' })
+  deleteClientByName(
+    @Param('folderId') folderId: string,
+    @Param('clientName') clientName: string
+  ) {
+    return this.clientsService.deleteClientByName(+folderId, clientName);
   }
+}

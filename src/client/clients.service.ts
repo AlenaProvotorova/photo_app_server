@@ -27,13 +27,23 @@ export class ClientsService {
       throw new Error('Client name is required');
     }
 
-    await this.repository.delete({ folderId });
+    // Получаем существующих клиентов
+    const existingClients = await this.repository.find({ where: { folderId } });
     
-    const newClients = clients.map(client => ({
-      ...client,
-      folderId,
-    }));
+    // Создаем карту существующих клиентов по имени для быстрого поиска
+    const existingClientsMap = new Map(
+      existingClients.map(client => [client.name, client])
+    );
     
+    // Фильтруем только тех клиентов, которых еще нет
+    const newClients = clients
+      .filter(client => !existingClientsMap.has(client.name))
+      .map(client => ({
+        ...client,
+        folderId,
+      }));
+    
+    // Сохраняем только новых клиентов
     return this.repository.save(newClients);
   }
 
@@ -56,5 +66,17 @@ export class ClientsService {
     
     client.orderAlbum = orderAlbum;
     return this.repository.save(client);
+  }
+
+  async deleteClientByName(folderId: number, clientName: string): Promise<void> {
+    const client = await this.repository.findOne({ 
+      where: { folderId, name: clientName } 
+    });
+    
+    if (!client) {
+      throw new NotFoundException('Клиент не найден');
+    }
+    
+    await this.repository.remove(client);
   }
 }
