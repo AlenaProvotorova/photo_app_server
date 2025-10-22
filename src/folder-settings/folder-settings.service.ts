@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { FolderSettingsEntity } from "./entities/folder-settings.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UpdateFolderSettingsDto } from "./dto/update-folder-settings.dto";
 import { isBoolean } from "class-validator";
+import { SettingField } from "./interfaces/setting-field.interface";
 
 const defaultRuNameSelectAllDigital = 'Выбрать все фото в цифровом виде';
 const defaultRuNamePhotoOne = 'Фото 1';
@@ -33,30 +34,37 @@ export class FolderSettingsService {
       showSelectAllDigital: {
         show: false,
         ruName: defaultRuNameSelectAllDigital,
+        price: 0,
       },
       photoOne: {
         show: false,
         ruName: defaultRuNamePhotoOne,
+        price: 0,
       },
       photoTwo: {
         show: false,
         ruName: defaultRuNamePhotoTwo,
+        price: 0,
       },
       photoThree: {
         show: false,
         ruName: defaultRuNamePhotoThree,
+        price: 0,
       },
       sizeOne: {
         show: false,
         ruName: defaultRuNameSizeOne,
+        price: 0,
       },
       sizeTwo: {
         show: false,
         ruName: defaultRuNameSizeTwo,
+        price: 0,
       },
       sizeThree: {
         show: false,
         ruName: defaultRuNameSizeThree,
+        price: 0,
       },
     });
     return this.repository.save(settings);
@@ -67,23 +75,34 @@ export class FolderSettingsService {
     if (!settings) {
       throw new NotFoundException('Settings not found');
     }
-    const { settingName, newName, show, ...otherUpdates } = updateSettingsDto;
+    
+    const { settingName, newName, show, price, ...otherUpdates } = updateSettingsDto;
 
-    if (settingName && newName) {
-      if (settings[settingName]) {
-        settings[settingName].ruName = newName;
-      } else {
+    // Валидация поля price
+    if (price !== undefined) {
+      if (typeof price !== 'number' || isNaN(price)) {
+        throw new BadRequestException('Price must be a valid number');
+      }
+      if (price < 0) {
+        throw new BadRequestException('Price cannot be negative');
+      }
+    }
+
+    if (settingName) {
+      if (!settings[settingName]) {
         throw new NotFoundException(`Setting ${settingName} not found`);
       }
-    } else {
-      Object.assign(settings, otherUpdates);
-    }
-  
-    if (settingName && isBoolean(show)) {
-      if (settings[settingName]) {
+
+      if (newName !== undefined) {
+        settings[settingName].ruName = newName;
+      }
+
+      if (isBoolean(show)) {
         settings[settingName].show = show;
-      } else {
-        throw new NotFoundException(`Setting ${settingName} not found`);
+      }
+
+      if (price !== undefined) {
+        settings[settingName].price = price;
       }
     } else {
       Object.assign(settings, otherUpdates);

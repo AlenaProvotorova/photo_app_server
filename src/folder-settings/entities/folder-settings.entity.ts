@@ -1,5 +1,6 @@
 import { FolderEntity } from 'src/folders/entities/folder.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { SettingField } from '../interfaces/setting-field.interface';
 
 @Entity('folder_settings')
 export class FolderSettingsEntity {
@@ -10,25 +11,25 @@ export class FolderSettingsEntity {
   folderId: number;
 
   @Column('jsonb')
-  showSelectAllDigital: object;
+  showSelectAllDigital: SettingField;
 
   @Column('jsonb')
-  photoOne: object;
+  photoOne: SettingField;
 
   @Column('jsonb')
-  photoTwo: object;
+  photoTwo: SettingField;
  
   @Column('jsonb')
-  photoThree: object;
+  photoThree: SettingField;
 
   @Column('jsonb')
-  sizeOne: object;
+  sizeOne: SettingField;
 
   @Column('jsonb')
-  sizeTwo: object;
+  sizeTwo: SettingField;
 
   @Column('jsonb')
-  sizeThree: object;
+  sizeThree: SettingField;
 
   @OneToOne(() => FolderEntity)
   @JoinColumn({ name: 'folderId' })

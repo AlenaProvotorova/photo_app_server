@@ -1,5 +1,19 @@
+import { IsOptional, IsString, IsBoolean, IsNumber } from 'class-validator';
+
 export class UpdateFolderSettingsDto {
+  @IsOptional()
+  @IsString()
   settingName?: string; 
+  
+  @IsOptional()
+  @IsString()
   newName?: string;    
-  show?: boolean;    
+  
+  @IsOptional()
+  @IsBoolean()
+  show?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  price?: number;
 }
