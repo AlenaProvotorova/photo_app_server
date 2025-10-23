@@ -92,7 +92,8 @@ export class FilesController {
     let savedFile;
 
     if (imageExtensions.includes(fileExtension)) {
-      const tempPath = `uploads/temp_${Date.now()}_${file.originalname}`;
+      const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._\s\-()]/g, '_');
+      const tempPath = `uploads/temp_${Date.now()}_${safeFileName}`;
       
       const fs = require('fs');
       fs.writeFileSync(tempPath, file.buffer);

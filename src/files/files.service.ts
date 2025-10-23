@@ -42,7 +42,7 @@ export class FilesService {
       
       const cleanOriginalName = file.originalname
         .replace(/[^\x00-\x7F]/g, '')
-        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .replace(/[^a-zA-Z0-9._\s\-()]/g, '_')
         .substring(0, 255);
     
       let result;
@@ -328,7 +328,8 @@ export class FilesService {
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize);
       const batchPromises = batch.map(async (file) => {
-        const tempPath = `uploads/temp_${Date.now()}_${Math.random().toString(36).substring(7)}_${file.originalname}`;
+        const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._\s\-()]/g, '_');
+        const tempPath = `uploads/temp_${Date.now()}_${Math.random().toString(36).substring(7)}_${safeFileName}`;
         tempFiles.push(tempPath);
         
         try {
