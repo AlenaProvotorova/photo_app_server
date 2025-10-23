@@ -27,23 +27,20 @@ export class ClientsService {
       throw new Error('Client name is required');
     }
 
-    // Получаем существующих клиентов
     const existingClients = await this.repository.find({ where: { folderId } });
     
-    // Создаем карту существующих клиентов по имени для быстрого поиска
     const existingClientsMap = new Map(
       existingClients.map(client => [client.name, client])
     );
     
-    // Фильтруем только тех клиентов, которых еще нет
     const newClients = clients
       .filter(client => !existingClientsMap.has(client.name))
       .map(client => ({
         ...client,
         folderId,
+        orderAlbum: client.orderAlbum ?? null, 
       }));
     
-    // Сохраняем только новых клиентов
     return this.repository.save(newClients);
   }
 

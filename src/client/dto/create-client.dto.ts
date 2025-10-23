@@ -7,4 +7,5 @@ export class CreateClientDto {
     folderId: number;
 
     orderDigital?: boolean;
+    orderAlbum?: boolean;
   }
