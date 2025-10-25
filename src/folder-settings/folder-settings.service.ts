@@ -5,6 +5,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { UpdateFolderSettingsDto } from "./dto/update-folder-settings.dto";
 import { isBoolean } from "class-validator";
 import { SettingField } from "./interfaces/setting-field.interface";
+import { FolderEntity } from "../folders/entities/folder.entity";
 
 const defaultRuNameSelectAllDigital = 'Выбрать все фото в цифровом виде';
 const defaultRuNamePhotoOne = 'Фото 1';
@@ -19,6 +20,8 @@ export class FolderSettingsService {
   constructor(
     @InjectRepository(FolderSettingsEntity)
     private repository: Repository<FolderSettingsEntity>,
+    @InjectRepository(FolderEntity)
+    private folderRepository: Repository<FolderEntity>,
   ) {}
 
   async getAllSettings(folderId: number): Promise<FolderSettingsEntity> {
@@ -29,6 +32,16 @@ export class FolderSettingsService {
   }
 
   async createDefaultSettings(folderId: number): Promise<FolderSettingsEntity> {
+    // Получаем информацию о папке для установки даты
+    const folder = await this.folderRepository.findOne({ where: { id: folderId } });
+    if (!folder) {
+      throw new NotFoundException('Folder not found');
+    }
+
+    // Устанавливаем дату как дата создания папки + 2 недели
+    const dateSelectTo = new Date(folder.createdAt);
+    dateSelectTo.setDate(dateSelectTo.getDate() + 14);
+
     const settings = this.repository.create({
       folderId,
       showSelectAllDigital: {
@@ -66,6 +79,7 @@ export class FolderSettingsService {
         ruName: defaultRuNameSizeThree,
         price: 0,
       },
+      dateSelectTo,
     });
     return this.repository.save(settings);
   }
@@ -76,7 +90,7 @@ export class FolderSettingsService {
       throw new NotFoundException('Settings not found');
     }
     
-    const { settingName, newName, show, price, ...otherUpdates } = updateSettingsDto;
+    const { settingName, newName, show, price, dateSelectTo, ...otherUpdates } = updateSettingsDto;
 
     // Валидация поля price
     if (price !== undefined) {
@@ -86,6 +100,26 @@ export class FolderSettingsService {
       if (price < 0) {
         throw new BadRequestException('Price cannot be negative');
       }
+    }
+
+    // Валидация поля dateSelectTo
+    if (dateSelectTo !== undefined) {
+      // Если дата пришла в формате "YYYY-MM-DDTHH:mm:ss.sss" без часового пояса,
+      // интерпретируем её как UTC время, чтобы избежать сдвига часовых поясов
+      let date: Date;
+      
+      if (dateSelectTo.includes('T') && !dateSelectTo.includes('Z') && !dateSelectTo.includes('+') && !dateSelectTo.includes('-', 10)) {
+        // Добавляем Z чтобы интерпретировать как UTC
+        date = new Date(dateSelectTo + 'Z');
+      } else {
+        date = new Date(dateSelectTo);
+      }
+      
+      if (isNaN(date.getTime())) {
+        throw new BadRequestException('Invalid date format for dateSelectTo');
+      }
+      
+      settings.dateSelectTo = date;
     }
 
     if (settingName) {

@@ -3,7 +3,6 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class AddDescriptionToFolderSettings1761136323918 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // Обновляем поле showSelectAllDigital
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "showSelectAllDigital" = jsonb_set(
@@ -18,7 +17,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
             WHERE "showSelectAllDigital" IS NOT NULL
         `);
 
-        // Обновляем поле photoOne
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoOne" = jsonb_set(
@@ -33,7 +31,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
             WHERE "photoOne" IS NOT NULL
         `);
 
-        // Обновляем поле photoTwo
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoTwo" = jsonb_set(
@@ -48,7 +45,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
             WHERE "photoTwo" IS NOT NULL
         `);
 
-        // Обновляем поле photoThree
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoThree" = jsonb_set(
@@ -63,7 +59,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
             WHERE "photoThree" IS NOT NULL
         `);
 
-        // Обновляем поле sizeOne
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeOne" = jsonb_set(
@@ -78,7 +73,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
             WHERE "sizeOne" IS NOT NULL
         `);
 
-        // Обновляем поле sizeTwo
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeTwo" = jsonb_set(
@@ -93,7 +87,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
             WHERE "sizeTwo" IS NOT NULL
         `);
 
-        // Обновляем поле sizeThree
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeThree" = jsonb_set(
@@ -110,7 +103,6 @@ export class AddDescriptionToFolderSettings1761136323918 implements MigrationInt
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        // Удаляем поле description из всех полей
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "showSelectAllDigital" = "showSelectAllDigital" - 'description'

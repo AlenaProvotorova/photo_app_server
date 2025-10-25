@@ -3,8 +3,6 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class RenameDescriptionToPriceInFolderSettings1761137200027 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // Переименовываем поле description в price для всех полей настроек
-        // showSelectAllDigital
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "showSelectAllDigital" = jsonb_set(
@@ -15,7 +13,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "showSelectAllDigital" IS NOT NULL
         `);
 
-        // photoOne
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoOne" = jsonb_set(
@@ -26,7 +23,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "photoOne" IS NOT NULL
         `);
 
-        // photoTwo
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoTwo" = jsonb_set(
@@ -37,7 +33,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "photoTwo" IS NOT NULL
         `);
 
-        // photoThree
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoThree" = jsonb_set(
@@ -48,7 +43,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "photoThree" IS NOT NULL
         `);
 
-        // sizeOne
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeOne" = jsonb_set(
@@ -59,7 +53,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "sizeOne" IS NOT NULL
         `);
 
-        // sizeTwo
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeTwo" = jsonb_set(
@@ -70,7 +63,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "sizeTwo" IS NOT NULL
         `);
 
-        // sizeThree
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeThree" = jsonb_set(
@@ -83,8 +75,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        // Возвращаем поле price обратно в description
-        // showSelectAllDigital
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "showSelectAllDigital" = jsonb_set(
@@ -95,7 +85,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "showSelectAllDigital" IS NOT NULL
         `);
 
-        // photoOne
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoOne" = jsonb_set(
@@ -106,7 +95,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "photoOne" IS NOT NULL
         `);
 
-        // photoTwo
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoTwo" = jsonb_set(
@@ -117,7 +105,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "photoTwo" IS NOT NULL
         `);
 
-        // photoThree
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "photoThree" = jsonb_set(
@@ -128,7 +115,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "photoThree" IS NOT NULL
         `);
 
-        // sizeOne
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeOne" = jsonb_set(
@@ -139,7 +125,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "sizeOne" IS NOT NULL
         `);
 
-        // sizeTwo
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeTwo" = jsonb_set(
@@ -150,7 +135,6 @@ export class RenameDescriptionToPriceInFolderSettings1761137200027 implements Mi
             WHERE "sizeTwo" IS NOT NULL
         `);
 
-        // sizeThree
         await queryRunner.query(`
             UPDATE folder_settings 
             SET "sizeThree" = jsonb_set(

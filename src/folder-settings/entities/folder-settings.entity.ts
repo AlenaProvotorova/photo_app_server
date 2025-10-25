@@ -31,6 +31,9 @@ export class FolderSettingsEntity {
   @Column('jsonb')
   sizeThree: SettingField;
 
+  @Column({ type: 'timestamp', nullable: true })
+  dateSelectTo: Date;
+
   @OneToOne(() => FolderEntity)
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsBoolean, IsNumber } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsNumber, IsDateString } from 'class-validator';
 
 export class UpdateFolderSettingsDto {
   @IsOptional()
@@ -16,4 +16,8 @@ export class UpdateFolderSettingsDto {
   @IsOptional()
   @IsNumber()
   price?: number;
+
+  @IsOptional()
+  @IsDateString()
+  dateSelectTo?: string; // Формат: "YYYY-MM-DDTHH:mm:ss.sss" или "YYYY-MM-DDTHH:mm:ss.sssZ"
 }
