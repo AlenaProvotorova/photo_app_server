@@ -23,7 +23,7 @@ export class UserEntity {
   @Column()
   name: string;
 
-  @Column({ default: false })
+  @Column({ default: true })
   isAdmin: boolean;
 
   @Column({ default: false })
