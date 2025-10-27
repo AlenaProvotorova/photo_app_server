@@ -11,6 +11,13 @@ async function bootstrap() {
   
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    
+    app.use((req, res, next) => {
+      req.setTimeout(300000); 
+      res.setTimeout(300000);
+      next();
+    });
+    
     console.log('✅ NestJS application created successfully');
 
     app.setGlobalPrefix('api');
@@ -117,7 +124,6 @@ async function bootstrap() {
     });
     console.log('✅ Swagger documentation configured');
 
-    // Простой health check без проверки БД
     app.use('/api/health', (req, res) => {
       res.status(200).json({
         status: 'OK',

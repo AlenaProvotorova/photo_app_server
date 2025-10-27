@@ -12,7 +12,7 @@ export const fileStorage = new CloudinaryStorage({
       .join('');
 
     return {
-      folder: 'uploads',
+      folder: 'uploads/temp',
       public_id: publicId,
       format: fileExtName,
       resource_type: 'image',

@@ -196,15 +196,15 @@ export class FilesController {
   }
 
   @Delete('folder')
-  @ApiOperation({ summary: 'Delete all files in folder (async - fast response)' })
+  @ApiOperation({ summary: 'Delete all files in folder' })
   @ApiQuery({ name: 'folderId', required: true, description: 'Folder ID to delete all files from' })
   @ApiResponse({ 
     status: 200, 
-    description: 'Files marked for deletion, physical deletion in progress',
+    description: 'All files in folder deleted successfully',
     schema: {
       type: 'object',
       properties: {
-        deletedCount: { type: 'number', description: 'Number of files marked for deletion' },
+        deletedCount: { type: 'number', description: 'Number of files successfully deleted' },
         totalFiles: { type: 'number', description: 'Total number of files found in folder' },
         message: { type: 'string', description: 'Success message' }
       }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity, FileType } from './entities/file.entity';
 import { Repository } from 'typeorm';
 import { v2 as cloudinary } from 'cloudinary';
-import { unlinkSync, existsSync, writeFileSync } from 'fs';
+import { unlinkSync, existsSync, writeFileSync, readFileSync } from 'fs';
 import * as path from 'path';
 import { WatermarksService } from '../watermarks/watermarks.service';
 
@@ -47,14 +47,28 @@ export class FilesService {
     
       let result;
       if (file.buffer) {
-        result = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.buffer.toString('base64')}`, {
-          folder: folderId.toString(),
-          resource_type: 'auto',
-          public_id: filename,
-        });
+        const tempPath = `uploads/temp_upload_${Date.now()}_${filename}`;
+        try {
+          writeFileSync(tempPath, file.buffer);
+          
+          result = await cloudinary.uploader.upload(tempPath, {
+            folder: `uploads/${folderId}`,
+            resource_type: 'auto',
+            public_id: filename,
+          });
+          
+          if (existsSync(tempPath)) {
+            unlinkSync(tempPath);
+          }
+        } catch (error) {
+          if (existsSync(tempPath)) {
+            unlinkSync(tempPath);
+          }
+          throw error;
+        }
       } else if (file.path) {
         result = await cloudinary.uploader.upload(file.path, {
-          folder: folderId.toString(),
+          folder: `uploads/${folderId}`,
           resource_type: 'auto',
           public_id: filename,
         });
@@ -66,6 +80,10 @@ export class FilesService {
         throw new InternalServerErrorException('No file data to load');
       }
 
+      if (!result || !result.public_id || !result.secure_url) {
+        throw new InternalServerErrorException('Cloudinary upload failed: invalid response');
+      }
+
       const savedFile = await this.repository.save({
         filename: result.public_id, 
         originalName: cleanOriginalName, 
@@ -75,6 +93,10 @@ export class FilesService {
         path: result.secure_url,
         url: result.secure_url,
       });
+
+      if (!savedFile) {
+        throw new InternalServerErrorException('Failed to save file to database');
+      }
 
       return savedFile;
     } catch (error) {
@@ -93,11 +115,11 @@ export class FilesService {
         where: { id: Number(id) },
       });
       
-      if (file.filename && !file.path.startsWith('uploads/')) {
+      if (file.filename && file.path && !file.path.startsWith('uploads/')) {
         try {
           await cloudinary.uploader.destroy(file.filename);
         } catch (error) {
-          console.error(`Error deleting file from Cloudinary: ${error.message}`);
+          console.error(`Error deleting file from Cloudinary for file ${file.id}: ${error?.message || 'unknown error'}`);
         }
       }
       
@@ -119,7 +141,38 @@ export class FilesService {
   }
 
   async removeAllInFolder(folderId: number) {
-    // Сначала выполняем мягкое удаление всех файлов из базы данных
+    const files = await this.repository.find({
+      where: { folderId: folderId.toString() },
+    });
+
+    if (files.length === 0) {
+      return { deletedCount: 0, message: 'No files found in folder' };
+    }
+
+    const folderPath = `uploads/${folderId}`;
+    try {
+      const resources = await cloudinary.search
+        .expression(`folder:${folderPath}/*`)
+        .max_results(500)
+        .execute();
+      
+      if (resources.resources && resources.resources.length > 0) {
+        const publicIds = resources.resources.map(res => res.public_id);
+        
+        for (let i = 0; i < publicIds.length; i += 100) {
+          const batch = publicIds.slice(i, i + 100);
+          await cloudinary.api.delete_resources(batch, {
+            type: 'upload'
+          });
+        }
+        
+        console.log(`Successfully deleted ${publicIds.length} resources from Cloudinary folder: ${folderPath}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting folder from Cloudinary: ${error?.message || 'unknown error'}`, error);
+      await this.deleteFilesFromStorageFast(files);
+    }
+
     const qb = await this.repository
       .createQueryBuilder('file')
       .where('folderId = :folderId', { folderId })
@@ -128,25 +181,10 @@ export class FilesService {
 
     const deletedCount = qb.affected || 0;
 
-    if (deletedCount === 0) {
-      return { deletedCount: 0, message: 'No files found in folder' };
-    }
-
-    // Получаем файлы для физического удаления (только не удаленные)
-    const files = await this.repository.find({
-      where: { folderId: folderId.toString() },
-      withDeleted: true,
-    });
-
-    // Асинхронно удаляем файлы из хранилища без ожидания
-    this.deleteFilesFromStorage(files).catch(error => {
-      console.error('Error in background file deletion:', error);
-    });
-
     return {
       deletedCount,
       totalFiles: files.length,
-      message: `Successfully marked ${deletedCount} files for deletion. Physical deletion is in progress.`,
+      message: `Successfully deleted ${deletedCount} files from folder.`,
     };
   }
 
@@ -159,56 +197,40 @@ export class FilesService {
       return { deletedCount: 0, message: 'No files found in folder' };
     }
 
-    let deletedCount = 0;
     const errors: string[] = [];
 
-    // Обрабатываем файлы пакетами для оптимизации
-    const batchSize = 5; // Меньший размер пакета для синхронной обработки
-    for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
+    const folderPath = `uploads/${folderId}`;
+    try {
+      const resources = await cloudinary.search
+        .expression(`folder:${folderPath}/*`)
+        .max_results(500)
+        .execute();
       
-      // Обрабатываем пакет файлов параллельно
-      const promises = batch.map(async (file) => {
-        try {
-          // Удаляем из Cloudinary если файл там хранится
-          if (file.filename && !file.path.startsWith('uploads/')) {
-            try {
-              await cloudinary.uploader.destroy(file.filename);
-            } catch (error) {
-              console.error(`Error deleting file from Cloudinary: ${error.message}`);
-              errors.push(`Cloudinary error for file ${file.id}: ${error.message}`);
-            }
-          }
-          
-          // Удаляем локальный файл если он существует
-          if (file.path && file.path.startsWith('uploads/')) {
-            if (existsSync(file.path)) {
-              unlinkSync(file.path);
-            }
-          }
-          
-          deletedCount++;
-        } catch (error) {
-          console.error(`Error processing file ${file.id}:`, error);
-          errors.push(`Error processing file ${file.id}: ${error.message}`);
+      if (resources.resources && resources.resources.length > 0) {
+        const publicIds = resources.resources.map(res => res.public_id);
+        
+        for (let i = 0; i < publicIds.length; i += 100) {
+          const batch = publicIds.slice(i, i + 100);
+          await cloudinary.api.delete_resources(batch, {
+            type: 'upload'
+          });
         }
-      });
-
-      // Ждем завершения текущего пакета
-      await Promise.allSettled(promises);
-      
-      // Небольшая пауза между пакетами
-      if (i + batchSize < files.length) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        console.log(`Successfully deleted ${publicIds.length} resources from Cloudinary folder: ${folderPath}`);
       }
+    } catch (error) {
+      console.error(`Error deleting folder from Cloudinary: ${error?.message || 'unknown error'}`, error);
+      errors.push(`Cloudinary error: ${error?.message || 'unknown error'}`);
+      await this.deleteFilesFromStorageFast(files);
     }
 
-    // Мягкое удаление всех файлов в папке из базы данных
     const qb = await this.repository
       .createQueryBuilder('file')
       .where('folderId = :folderId', { folderId })
       .softDelete()
       .execute();
+
+    const deletedCount = qb.affected || 0;
 
     return {
       deletedCount,
@@ -219,26 +241,23 @@ export class FilesService {
   }
 
   private async deleteFilesFromStorage(files: any[]) {
-    const batchSize = 10; // Обрабатываем файлы пакетами
+    const batchSize = 10; 
     const errors: string[] = [];
 
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize);
       
-      // Обрабатываем пакет файлов параллельно
       const promises = batch.map(async (file) => {
         try {
-          // Удаляем из Cloudinary если файл там хранится
-          if (file.filename && !file.path.startsWith('uploads/')) {
+          if (file.filename && file.path && !file.path.startsWith('uploads/')) {
             try {
               await cloudinary.uploader.destroy(file.filename);
             } catch (error) {
-              console.error(`Error deleting file from Cloudinary: ${error.message}`);
-              errors.push(`Cloudinary error for file ${file.id}: ${error.message}`);
+              console.error(`Error deleting file from Cloudinary for file ${file.id}: ${error?.message || 'unknown error'}`);
+              errors.push(`Cloudinary error for file ${file.id}: ${error?.message || 'unknown error'}`);
             }
           }
           
-          // Удаляем локальный файл если он существует
           if (file.path && file.path.startsWith('uploads/')) {
             if (existsSync(file.path)) {
               unlinkSync(file.path);
@@ -249,11 +268,9 @@ export class FilesService {
           errors.push(`Error processing file ${file.id}: ${error.message}`);
         }
       });
-
-      // Ждем завершения текущего пакета
+    
       await Promise.allSettled(promises);
       
-      // Небольшая пауза между пакетами для снижения нагрузки
       if (i + batchSize < files.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -261,6 +278,50 @@ export class FilesService {
 
     if (errors.length > 0) {
       console.error('Errors during background file deletion:', errors);
+    }
+  }
+
+  private async deleteFilesFromStorageFast(files: any[]) {
+    const errors: string[] = [];
+    
+    const publicIds: string[] = [];
+    const localPaths: string[] = [];
+
+    files.forEach(file => {
+      if (file.filename && file.path && !file.path.startsWith('uploads/')) {
+        publicIds.push(file.filename);
+      }
+      
+      if (file.path && file.path.startsWith('uploads/')) {
+        localPaths.push(file.path);
+      }
+    });
+
+    for (let i = 0; i < publicIds.length; i += 100) {
+      const batch = publicIds.slice(i, i + 100);
+      try {
+        await cloudinary.api.delete_resources(batch, {
+          type: 'upload'
+        });
+      } catch (error) {
+        console.error(`Error deleting batch from Cloudinary: ${error?.message || 'unknown error'}`);
+        errors.push(`Cloudinary batch error: ${error?.message || 'unknown error'}`);
+      }
+    }
+      
+    localPaths.forEach(path => {
+      try {
+        if (existsSync(path)) {
+          unlinkSync(path);
+        }
+      } catch (error) {
+        console.error(`Error deleting local file: ${error?.message || 'unknown error'}`);
+        errors.push(`Local file error: ${error?.message || 'unknown error'}`);
+      }
+    });
+
+    if (errors.length > 0) {
+      console.error('Errors during fast file deletion:', errors);
     }
   }
 
@@ -323,13 +384,18 @@ export class FilesService {
   ): Promise<FileEntity[]> {
     const results: FileEntity[] = [];
     const tempFiles: string[] = [];
-
-    const batchSize = 10;
+  
+    const batchSize = 4;
+    console.log(`Starting batch upload of ${files.length} image files with watermarks (batch size: ${batchSize})`);
+    
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize);
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(files.length / batchSize)}`);
+      
       const batchPromises = batch.map(async (file) => {
         const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._\s\-()]/g, '_');
-        const tempPath = `uploads/temp_${Date.now()}_${Math.random().toString(36).substring(7)}_${safeFileName}`;
+        const uniqueId = `${Date.now()}_${i}_${Math.random().toString(36).substring(7)}_${safeFileName}`;
+        const tempPath = `uploads/temp_${uniqueId}`;
         tempFiles.push(tempPath);
         
         try {
@@ -337,36 +403,59 @@ export class FilesService {
           
           const watermarkedPath = await this.watermarkService.applyWatermark(tempPath, userId);
           
+          if (!existsSync(watermarkedPath)) {
+            throw new Error(`Watermarked file not found at ${watermarkedPath}`);
+          }
+          
+          const watermarkedBuffer = readFileSync(watermarkedPath);
+          
+          if (!watermarkedBuffer || watermarkedBuffer.length === 0) {
+            throw new Error(`Watermarked file is empty: ${watermarkedPath}`);
+          }
+          
           const processedFile = {
             ...file,
             path: watermarkedPath,
-            buffer: file.buffer
+            buffer: watermarkedBuffer
           };
           
           const savedFile = await this.create(processedFile, folderId);
           
+          if (!savedFile) {
+            throw new Error(`Failed to save file ${file.originalname}`);
+          }
+          
           if (existsSync(tempPath)) {
             unlinkSync(tempPath);
+          }
+          if (existsSync(watermarkedPath) && watermarkedPath !== tempPath) {
+            unlinkSync(watermarkedPath);
           }
           
           return savedFile;
         } catch (error) {
+          console.error(`Error processing file ${file.originalname}:`, error.message);
           if (existsSync(tempPath)) {
             unlinkSync(tempPath);
           }
-          throw error;
+          return null;
         }
       });
 
       const batchResults = await Promise.allSettled(batchPromises);
       
       batchResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
+        const fileName = batch[index]?.originalname || 'unknown';
+        if (result.status === 'fulfilled' && result.value !== null) {
           results.push(result.value);
-        } else {
-          console.error(`Error processing file ${batch[index].originalname}:`, result.reason);
+        } else if (result.status === 'rejected') {
+          console.error(`File processing rejected for ${fileName}:`, result.reason);
+        } else if (result.value === null) {
+          console.error(`File processing returned null for ${fileName}`);
         }
       });
+      
+      console.log(`Batch ${Math.floor(i / batchSize) + 1} completed: ${results.length} files uploaded`);
     }
 
     return results;
@@ -378,7 +467,7 @@ export class FilesService {
   ): Promise<FileEntity[]> {
     const results: FileEntity[] = [];
 
-    const batchSize = 20;
+    const batchSize = 30;
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize);
       const batchPromises = batch.map(file => this.create(file, folderId));
@@ -392,6 +481,8 @@ export class FilesService {
           console.error(`Error processing file ${batch[index].originalname}:`, result.reason);
         }
       });
+      
+      console.log(`Processed other files batch ${Math.floor(i / batchSize) + 1}, successful: ${results.length}/${files.length} files`);
     }
 
     return results;
