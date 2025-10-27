@@ -8,7 +8,6 @@ import { FolderSettingsEntity } from './entities/folder-settings.entity';
 @Controller('folder-settings')
 @ApiTags('folder-settings')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class FolderSettingsController {
   constructor(private readonly settingsService: FolderSettingsService) {}
 
