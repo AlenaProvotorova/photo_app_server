@@ -1,6 +1,7 @@
 import { Controller, Post, Body,  UseGuards, Get, Patch, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 import { FolderSettingsService } from './folder-settings.service';
 import { UpdateFolderSettingsDto } from './dto/update-folder-settings.dto';
 import { FolderSettingsEntity } from './entities/folder-settings.entity';
@@ -12,6 +13,7 @@ export class FolderSettingsController {
   constructor(private readonly settingsService: FolderSettingsService) {}
 
   @Get(':folderId')
+  @Public()
   @ApiOperation({ summary: 'Получить настройки папки' })
   @ApiResponse({ status: 200, description: 'Настройки папки получены успешно', type: FolderSettingsEntity })
   getAllSettings(@Param('folderId') folderId: string) {
