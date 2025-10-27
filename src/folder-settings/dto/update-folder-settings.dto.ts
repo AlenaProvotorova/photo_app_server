@@ -20,4 +20,8 @@ export class UpdateFolderSettingsDto {
   @IsOptional()
   @IsDateString()
   dateSelectTo?: string; // Формат: "YYYY-MM-DDTHH:mm:ss.sss" или "YYYY-MM-DDTHH:mm:ss.sssZ"
+
+  @IsOptional()
+  @IsBoolean()
+  firstSettingsAlert?: boolean;
 }

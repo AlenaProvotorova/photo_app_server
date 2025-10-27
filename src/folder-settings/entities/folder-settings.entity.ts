@@ -34,6 +34,9 @@ export class FolderSettingsEntity {
   @Column({ type: 'timestamp', nullable: true })
   dateSelectTo: Date;
 
+  @Column({ default: false })
+  firstSettingsAlert: boolean;
+
   @OneToOne(() => FolderEntity)
   @JoinColumn({ name: 'folderId' })
   folder: FolderEntity;

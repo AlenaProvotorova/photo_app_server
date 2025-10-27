@@ -80,6 +80,7 @@ export class FolderSettingsService {
         price: 0,
       },
       dateSelectTo,
+      firstSettingsAlert: false,
     });
     return this.repository.save(settings);
   }
@@ -90,7 +91,7 @@ export class FolderSettingsService {
       throw new NotFoundException('Settings not found');
     }
     
-    const { settingName, newName, show, price, dateSelectTo, ...otherUpdates } = updateSettingsDto;
+    const { settingName, newName, show, price, dateSelectTo, firstSettingsAlert, ...otherUpdates } = updateSettingsDto;
 
     // Валидация поля price
     if (price !== undefined) {
@@ -135,13 +136,17 @@ export class FolderSettingsService {
         settings[settingName].show = show;
       }
 
-      if (price !== undefined) {
-        settings[settingName].price = price;
-      }
-    } else {
-      Object.assign(settings, otherUpdates);
+    if (price !== undefined) {
+      settings[settingName].price = price;
     }
-
-    return this.repository.save(settings);
+  } else {
+    Object.assign(settings, otherUpdates);
   }
+
+  if (firstSettingsAlert !== undefined) {
+    settings.firstSettingsAlert = firstSettingsAlert;
+  }
+
+  return this.repository.save(settings);
+}
 }
