@@ -5,12 +5,24 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import fetch from 'node-fetch';
 import { DataSource } from 'typeorm';
+import { existsSync, mkdirSync } from 'fs';
 
 async function bootstrap() {
   console.log('🔄 Initializing NestJS application...');
   
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    
+    // Создаем необходимые папки для временных файлов
+    const directories = ['uploads', 'watermarks'];
+    directories.forEach(dir => {
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+        console.log(`📁 Created directory: ${dir}`);
+      } else {
+        console.log(`📁 Directory exists: ${dir}`);
+      }
+    });
     
     app.use((req, res, next) => {
       req.setTimeout(300000); 
