@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity, FileType } from './entities/file.entity';
 import { Repository } from 'typeorm';
-import { v2 as cloudinary } from 'cloudinary';
+import { S3StorageService } from './s3.service';
 import { unlinkSync, existsSync, writeFileSync, readFileSync } from 'fs';
 import * as path from 'path';
 import { WatermarksService } from '../watermarks/watermarks.service';
@@ -13,7 +13,20 @@ export class FilesService {
     @InjectRepository(FileEntity)
     private repository: Repository<FileEntity>,
     private readonly watermarkService: WatermarksService,
+    private readonly s3: S3StorageService,
   ) {}
+
+  private isManagedByS3(file: FileEntity): boolean {
+    const cdn = process.env.S3_CDN_URL || '';
+    const endpoint = process.env.S3_ENDPOINT || '';
+    const bucket = process.env.S3_BUCKET || '';
+    const url = file.url || file.path || '';
+    const key = file.filename || '';
+    const hasKnownPrefix = key.startsWith('uploads/') || key.startsWith('watermarks/');
+    const matchesCdn = cdn && url.includes(cdn);
+    const matchesEndpoint = endpoint && bucket && url.includes(`${bucket}`);
+    return hasKnownPrefix || matchesCdn || matchesEndpoint;
+  }
 
   findAll(fileType: FileType, folderId: number) {
     const qb = this.repository.createQueryBuilder('file');
@@ -45,16 +58,17 @@ export class FilesService {
         .replace(/[^a-zA-Z0-9._\s\-()]/g, '_')
         .substring(0, 255);
     
-      let result;
+      let uploadResult: { key: string; url: string };
       if (file.buffer) {
         const tempPath = `uploads/temp_upload_${Date.now()}_${filename}`;
         try {
           writeFileSync(tempPath, file.buffer);
-          
-          result = await cloudinary.uploader.upload(tempPath, {
-            folder: `uploads/${folderId}`,
-            resource_type: 'auto',
-            public_id: filename,
+          const objectKey = `uploads/${folderId}/${filename}`;
+          const buffer = readFileSync(tempPath);
+          uploadResult = await this.s3.upload({
+            key: objectKey,
+            contentType: file.mimetype,
+            body: buffer,
           });
           
           if (existsSync(tempPath)) {
@@ -67,10 +81,12 @@ export class FilesService {
           throw error;
         }
       } else if (file.path) {
-        result = await cloudinary.uploader.upload(file.path, {
-          folder: `uploads/${folderId}`,
-          resource_type: 'auto',
-          public_id: filename,
+        const objectKey = `uploads/${folderId}/${filename}`;
+        const buffer = readFileSync(file.path);
+        uploadResult = await this.s3.upload({
+          key: objectKey,
+          contentType: file.mimetype,
+          body: buffer,
         });
         
         if (existsSync(file.path)) {
@@ -80,18 +96,18 @@ export class FilesService {
         throw new InternalServerErrorException('No file data to load');
       }
 
-      if (!result || !result.public_id || !result.secure_url) {
-        throw new InternalServerErrorException('Cloudinary upload failed: invalid response');
+      if (!uploadResult || !uploadResult.key || !uploadResult.url) {
+        throw new InternalServerErrorException('S3 upload failed: invalid response');
       }
 
       const savedFile = await this.repository.save({
-        filename: result.public_id, 
+        filename: uploadResult.key, 
         originalName: cleanOriginalName, 
         size: file.size,
         mimetype: file.mimetype,
         folderId: folderId.toString(),
-        path: result.secure_url,
-        url: result.secure_url,
+        path: uploadResult.url,
+        url: uploadResult.url,
       });
 
       if (!savedFile) {
@@ -115,11 +131,11 @@ export class FilesService {
         where: { id: Number(id) },
       });
       
-      if (file.filename && file.path && !file.path.startsWith('uploads/')) {
+      if (file.filename && this.isManagedByS3(file)) {
         try {
-          await cloudinary.uploader.destroy(file.filename);
+          await this.s3.delete(file.filename);
         } catch (error) {
-          console.error(`Error deleting file from Cloudinary for file ${file.id}: ${error?.message || 'unknown error'}`);
+          console.error(`Error deleting S3 object for file ${file.id}: ${error?.message || 'unknown error'}`);
         }
       }
       
@@ -149,29 +165,7 @@ export class FilesService {
       return { deletedCount: 0, message: 'No files found in folder' };
     }
 
-    const folderPath = `uploads/${folderId}`;
-    try {
-      const resources = await cloudinary.search
-        .expression(`folder:${folderPath}/*`)
-        .max_results(500)
-        .execute();
-      
-      if (resources.resources && resources.resources.length > 0) {
-        const publicIds = resources.resources.map(res => res.public_id);
-        
-        for (let i = 0; i < publicIds.length; i += 100) {
-          const batch = publicIds.slice(i, i + 100);
-          await cloudinary.api.delete_resources(batch, {
-            type: 'upload'
-          });
-        }
-        
-        console.log(`Successfully deleted ${publicIds.length} resources from Cloudinary folder: ${folderPath}`);
-      }
-    } catch (error) {
-      console.error(`Error deleting folder from Cloudinary: ${error?.message || 'unknown error'}`, error);
-      await this.deleteFilesFromStorageFast(files);
-    }
+    await this.deleteFilesFromStorageFast(files);
 
     const qb = await this.repository
       .createQueryBuilder('file')
@@ -199,30 +193,7 @@ export class FilesService {
 
     const errors: string[] = [];
 
-    const folderPath = `uploads/${folderId}`;
-    try {
-      const resources = await cloudinary.search
-        .expression(`folder:${folderPath}/*`)
-        .max_results(500)
-        .execute();
-      
-      if (resources.resources && resources.resources.length > 0) {
-        const publicIds = resources.resources.map(res => res.public_id);
-        
-        for (let i = 0; i < publicIds.length; i += 100) {
-          const batch = publicIds.slice(i, i + 100);
-          await cloudinary.api.delete_resources(batch, {
-            type: 'upload'
-          });
-        }
-        
-        console.log(`Successfully deleted ${publicIds.length} resources from Cloudinary folder: ${folderPath}`);
-      }
-    } catch (error) {
-      console.error(`Error deleting folder from Cloudinary: ${error?.message || 'unknown error'}`, error);
-      errors.push(`Cloudinary error: ${error?.message || 'unknown error'}`);
-      await this.deleteFilesFromStorageFast(files);
-    }
+    await this.deleteFilesFromStorageFast(files);
 
     const qb = await this.repository
       .createQueryBuilder('file')
@@ -251,10 +222,10 @@ export class FilesService {
         try {
           if (file.filename && file.path && !file.path.startsWith('uploads/')) {
             try {
-              await cloudinary.uploader.destroy(file.filename);
+              await this.s3.delete(file.filename);
             } catch (error) {
-              console.error(`Error deleting file from Cloudinary for file ${file.id}: ${error?.message || 'unknown error'}`);
-              errors.push(`Cloudinary error for file ${file.id}: ${error?.message || 'unknown error'}`);
+              console.error(`Error deleting S3 object for file ${file.id}: ${error?.message || 'unknown error'}`);
+              errors.push(`S3 error for file ${file.id}: ${error?.message || 'unknown error'}`);
             }
           }
           
@@ -284,12 +255,12 @@ export class FilesService {
   private async deleteFilesFromStorageFast(files: any[]) {
     const errors: string[] = [];
     
-    const publicIds: string[] = [];
+    const keysToDelete: string[] = [];
     const localPaths: string[] = [];
 
     files.forEach(file => {
-      if (file.filename && file.path && !file.path.startsWith('uploads/')) {
-        publicIds.push(file.filename);
+      if (file.filename && this.isManagedByS3(file)) {
+        keysToDelete.push(file.filename);
       }
       
       if (file.path && file.path.startsWith('uploads/')) {
@@ -297,16 +268,15 @@ export class FilesService {
       }
     });
 
-    for (let i = 0; i < publicIds.length; i += 100) {
-      const batch = publicIds.slice(i, i + 100);
-      try {
-        await cloudinary.api.delete_resources(batch, {
-          type: 'upload'
-        });
-      } catch (error) {
-        console.error(`Error deleting batch from Cloudinary: ${error?.message || 'unknown error'}`);
-        errors.push(`Cloudinary batch error: ${error?.message || 'unknown error'}`);
-      }
+    // Delete S3 objects sequentially (or small parallel batches)
+    for (let i = 0; i < keysToDelete.length; i += 10) {
+      const batch = keysToDelete.slice(i, i + 10);
+      await Promise.all(batch.map(async (key) => {
+        try { await this.s3.delete(key); } catch (error) {
+          console.error(`Error deleting S3 object ${key}: ${error?.message || 'unknown error'}`);
+          errors.push(`S3 delete error for ${key}: ${error?.message || 'unknown error'}`);
+        }
+      }));
     }
       
     localPaths.forEach(path => {

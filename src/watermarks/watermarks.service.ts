@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WatermarkEntity } from './entities/watermark.entity';
 import { Repository } from 'typeorm';
-import { v2 as cloudinary } from 'cloudinary';
+import { S3StorageService } from '../files/s3.service';
 import { Jimp } from 'jimp';
 import { existsSync, unlinkSync } from 'fs';
 
@@ -22,6 +22,7 @@ export class WatermarksService {
   constructor(
     @InjectRepository(WatermarkEntity)
     private repository: Repository<WatermarkEntity>,
+    private readonly s3: S3StorageService,
   ) {}
 
   async find(userId: number) {
@@ -33,36 +34,35 @@ export class WatermarksService {
       where: { user: { id: userId } },
     });
 
-    let newCloudinaryResult;
+    let uploadResult: { key: string; url: string } | null = null;
     let oldFilename: string | null = null;
 
     try { 
-      newCloudinaryResult = await cloudinary.uploader.upload(file.path, {
-        folder: 'watermarks',
-        resource_type: 'image',
+      const fs = await import('fs');
+      const buffer = file.path && fs.existsSync(file.path) ? fs.readFileSync(file.path) : file.buffer;
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._\s\-()]/g, '_');
+      const objectKey = `watermarks/${userId}/${Date.now()}_${safeName}`;
+      uploadResult = await this.s3.upload({
+        key: objectKey,
+        contentType: file.mimetype,
+        body: buffer,
       });
 
       if (existingWatermark) {
         oldFilename = existingWatermark.filename;
-        try {
-          await cloudinary.uploader.destroy(existingWatermark.filename, {
-            resource_type: 'image',
-          });
-        } catch (error) {
-          console.error(`Error deleting old watermark from Cloudinary: ${error?.message}`);
-        }
+        try { await this.s3.delete(existingWatermark.filename); } catch (error) {}
 
         await this.repository.delete({ userId });
       }
 
       const watermarkToSave = {
-        filename: newCloudinaryResult.public_id, 
+        filename: uploadResult!.key, 
         originalName: file.originalname,
         fileSize: file.size,
         mimetype: file.mimetype,
         userId,
-        path: newCloudinaryResult.secure_url, 
-        url: newCloudinaryResult.secure_url,
+        path: uploadResult!.url, 
+        url: uploadResult!.url,
         isActive: true,
         opacity: 0.5,
         position: 'center',
@@ -87,14 +87,8 @@ export class WatermarksService {
     } catch (error) {
       console.error('Error creating watermark:', error);
       
-      if (newCloudinaryResult && newCloudinaryResult.public_id) {
-        try {
-          await cloudinary.uploader.destroy(newCloudinaryResult.public_id, {
-            resource_type: 'image',
-          });
-        } catch (rollbackError) {
-          console.error(`Error rolling back new watermark: ${rollbackError?.message}`);
-        }
+      if (uploadResult && uploadResult.key) {
+        try { await this.s3.delete(uploadResult.key); } catch (rollbackError) {}
       }
 
       if (file.path && existsSync(file.path)) {
@@ -128,9 +122,7 @@ export class WatermarksService {
     const watermark = await this.repository.findOne({ where: { userId } });
     if (!watermark) throw new NotFoundException('Watermark not found');
 
-    await cloudinary.uploader.destroy(watermark.filename, {
-      resource_type: 'image',
-    });
+    try { await this.s3.delete(watermark.filename); } catch (e) {}
     
     if (userId in this.watermarkCache) {
       delete this.watermarkCache[userId];

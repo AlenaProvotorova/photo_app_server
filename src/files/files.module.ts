@@ -5,6 +5,7 @@ import { FilesService } from './files.service';
 import { FileEntity } from './entities/file.entity';
 import { FolderModule } from 'src/folders/folders.module';
 import { WatermarksModule } from 'src/watermarks/watermarks.module';
+import { S3StorageService } from './s3.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { WatermarksModule } from 'src/watermarks/watermarks.module';
     WatermarksModule,
   ],
   controllers: [FilesController],
-  providers: [FilesService],
+  providers: [FilesService, S3StorageService],
 })
 export class FilesModule {}

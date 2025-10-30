@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { v2 as cloudinary } from 'cloudinary';
 import fetch from 'node-fetch';
 import { DataSource } from 'typeorm';
 import { existsSync, mkdirSync } from 'fs';
@@ -45,6 +44,8 @@ async function bootstrap() {
         'http://127.0.0.1:3000',
         'https://stalwart-mooncake-ddf369.netlify.app',
         'https://fastselect.ru', 
+        'https://www.fastselect.ru',
+        'https://api.fastselect.ru',
       ].filter(Boolean); 
       
       if (allowedOrigins.includes(origin)) {
@@ -111,12 +112,7 @@ async function bootstrap() {
     });
     console.log('✅ CORS middleware configured');
 
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-    console.log('✅ Cloudinary configured');
+    // Cloudinary removed: using S3 Object Storage instead
 
 
     const config = new DocumentBuilder()
