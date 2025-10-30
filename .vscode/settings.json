@@ -1,3 +1,18 @@
 {
-  "cSpell.words": ["cloudinary"]
+  "cSpell.words": [
+    "cloudinary"
+  ],
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "188.68.220.206",
+      "port": 5432,
+      "askForPassword": true,
+      "driver": "PostgreSQL",
+      "database": "appdb",
+      "username": "root",
+      "name": "appdb"
+    }
+  ]
 }

@@ -22,14 +22,14 @@ import { WatermarksModule } from './watermarks/watermarks.module';
         const databaseUrl = configService.get('DATABASE_URL');
         
         if (databaseUrl) {
-          // Railway PostgreSQL connection
+          // PostgreSQL connection via DATABASE_URL
           return {
             type: 'postgres',
             url: databaseUrl,
             synchronize: true,
             entities: [__dirname + '/**/*.entity{.js, .ts}'],
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-            // Railway-specific connection settings
+            // Extended connection timeouts for hosted environments
             connectTimeoutMS: 60000,
             acquireTimeoutMS: 60000,
             timeout: 60000,

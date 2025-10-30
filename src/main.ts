@@ -44,10 +44,7 @@ async function bootstrap() {
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         'https://stalwart-mooncake-ddf369.netlify.app',
-        'https://photoappserver-production.up.railway.app',
         'https://fastselect.ru', 
-        process.env.RAILWAY_STATIC_URL,
-        process.env.RAILWAY_PUBLIC_DOMAIN,
       ].filter(Boolean); 
       
       if (allowedOrigins.includes(origin)) {
