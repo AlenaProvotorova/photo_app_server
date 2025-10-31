@@ -4,6 +4,7 @@ import { FileEntity, FileType } from './entities/file.entity';
 import { Repository } from 'typeorm';
 import { S3StorageService } from './s3.service';
 import { unlinkSync, existsSync, writeFileSync, readFileSync } from 'fs';
+import * as mime from 'mime-types';
 import * as path from 'path';
 import { WatermarksService } from '../watermarks/watermarks.service';
 
@@ -59,15 +60,19 @@ export class FilesService {
         .substring(0, 255);
     
       let uploadResult: { key: string; url: string };
+      const detectedContentType =
+        file?.mimetype && file.mimetype !== 'application/octet-stream'
+          ? file.mimetype
+          : (mime.lookup(file?.originalname || '') || 'application/octet-stream').toString();
+      let objectKey = `uploads/${folderId}/${filename}`;
       if (file.buffer) {
         const tempPath = `uploads/temp_upload_${Date.now()}_${filename}`;
         try {
           writeFileSync(tempPath, file.buffer);
-          const objectKey = `uploads/${folderId}/${filename}`;
           const buffer = readFileSync(tempPath);
           uploadResult = await this.s3.upload({
             key: objectKey,
-            contentType: file.mimetype,
+            contentType: detectedContentType,
             body: buffer,
           });
           
@@ -81,11 +86,10 @@ export class FilesService {
           throw error;
         }
       } else if (file.path) {
-        const objectKey = `uploads/${folderId}/${filename}`;
         const buffer = readFileSync(file.path);
         uploadResult = await this.s3.upload({
           key: objectKey,
-          contentType: file.mimetype,
+          contentType: detectedContentType,
           body: buffer,
         });
         
@@ -100,14 +104,18 @@ export class FilesService {
         throw new InternalServerErrorException('S3 upload failed: invalid response');
       }
 
+      const cdn = (process.env.S3_CDN_URL || '').replace(/\/$/, '');
+      const encodedKey = encodeURIComponent(objectKey).replace(/%2F/g, '/');
+      const publicUrl = cdn ? `${cdn}/${encodedKey}` : uploadResult.url;
+
       const savedFile = await this.repository.save({
         filename: uploadResult.key, 
         originalName: cleanOriginalName, 
         size: file.size,
-        mimetype: file.mimetype,
+        mimetype: detectedContentType,
         folderId: folderId.toString(),
-        path: uploadResult.url,
-        url: uploadResult.url,
+        path: publicUrl,
+        url: publicUrl,
       });
 
       if (!savedFile) {
@@ -268,7 +276,6 @@ export class FilesService {
       }
     });
 
-    // Delete S3 objects sequentially (or small parallel batches)
     for (let i = 0; i < keysToDelete.length; i += 10) {
       const batch = keysToDelete.slice(i, i + 10);
       await Promise.all(batch.map(async (key) => {

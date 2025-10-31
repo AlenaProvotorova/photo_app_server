@@ -55,8 +55,10 @@ export class FilesController {
     @Query('folderId') folderId: number,
   ) {
     try {
+      console.log(`[FilesController] GET /files type=${fileType} folderId=${folderId}`);
       return await this.filesService.findAll(fileType, folderId);
     } catch (error) {
+      console.error('[FilesController] findAll error:', error?.stack || error);
       throw new InternalServerErrorException(error.message);
     }
   }
@@ -86,6 +88,13 @@ export class FilesController {
     @UserId() userId: number,
     @Query('folderId') folderId: string,
   ) {
+    console.log('[FilesController] POST /files start', {
+      userId,
+      folderId,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+    });
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const fileExtension = path.extname(file.originalname).toLowerCase();
 
@@ -99,6 +108,7 @@ export class FilesController {
       fs.writeFileSync(tempPath, file.buffer);
       
       try {
+        console.log('[FilesController] applying watermark', { tempPath, userId });
         const watermarkedPath = await this.watermarkService.applyWatermark(
           tempPath,
           userId,
@@ -110,6 +120,7 @@ export class FilesController {
           buffer: fs.readFileSync(watermarkedPath)
         };
         
+        console.log('[FilesController] uploading watermarked file');
         savedFile = await this.filesService.create(watermarkedFile, folderId);
         
         if (fs.existsSync(tempPath)) {
@@ -119,12 +130,14 @@ export class FilesController {
           fs.unlinkSync(watermarkedPath);
         }
       } catch (error) {
+        console.error('[FilesController] create (image) error:', error?.stack || error);
         if (fs.existsSync(tempPath)) {
           fs.unlinkSync(tempPath);
         }
         throw error;
       }
     } else {
+      console.log('[FilesController] uploading non-image file');
       savedFile = await this.filesService.create(file, folderId);
     }
 

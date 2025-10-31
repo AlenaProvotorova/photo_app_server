@@ -3,23 +3,17 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import fetch from 'node-fetch';
-import { DataSource } from 'typeorm';
 import { existsSync, mkdirSync } from 'fs';
 
 async function bootstrap() {
-  console.log('🔄 Initializing NestJS application...');
   
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     
-    // Создаем необходимые папки для временных файлов
     const directories = ['uploads', 'watermarks'];
     directories.forEach(dir => {
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
-        console.log(`📁 Created directory: ${dir}`);
-      } else {
-        console.log(`📁 Directory exists: ${dir}`);
       }
     });
     
@@ -29,11 +23,10 @@ async function bootstrap() {
       next();
     });
     
-    console.log('✅ NestJS application created successfully');
-
     app.setGlobalPrefix('api');
-    console.log('✅ Global prefix set to "api"');
   
+    const isProduction = process.env.NODE_ENV === 'production';
+
     app.enableCors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
@@ -52,18 +45,14 @@ async function bootstrap() {
         return callback(null, true);
       }
       
-      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
-        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-          return callback(null, true);
-        }
-      }
-      
-      // Allow desktop Flutter apps and local development
-      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1):(808[0-9]|300[0-9]|517[0-9])$/)) {
+      if (!isProduction && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
         return callback(null, true);
       }
       
-      // Allow requests without origin (desktop apps, mobile apps, etc.)
+      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1):([0-9]{2,5})$/)) {
+        return callback(null, true);
+      }
+      
       if (!origin || origin === 'null') {
         return callback(null, true);
       }
@@ -92,12 +81,10 @@ async function bootstrap() {
     optionsSuccessStatus: 200,
     preflightContinue: false,
   });
-  console.log('✅ CORS enabled');
 
   if (!globalThis.fetch) {
     globalThis.fetch = fetch;
   }
-  console.log('✅ Global fetch configured');
 
     app.use((req, res, next) => {
       const origin = req.headers.origin;
@@ -110,9 +97,7 @@ async function bootstrap() {
       
       next();
     });
-    console.log('✅ CORS middleware configured');
 
-    // Cloudinary removed: using S3 Object Storage instead
 
 
     const config = new DocumentBuilder()
@@ -127,7 +112,6 @@ async function bootstrap() {
         persistAuthorization: true,
       },
     });
-    console.log('✅ Swagger documentation configured');
 
     app.use('/api/health', (req, res) => {
       res.status(200).json({
@@ -141,26 +125,18 @@ async function bootstrap() {
         version: '1.0.0',
       });
     });
-    console.log('✅ Health check endpoint configured');
 
     const port = process.env.PORT ?? 3000;
     const host = '0.0.0.0';
 
-    console.log(`🚀 Starting server on ${host}:${port}`);
-    console.log(`📊 Health check available at: http://${host}:${port}/api/health`);
-    console.log(`📚 Swagger docs available at: http://${host}:${port}/swagger`);
-    
     await app.listen(port, host);
     
-    console.log(`✅ Server successfully started on ${host}:${port}`);
     
   } catch (error) {
-    console.error('❌ Error during application initialization:', error);
     throw error;
   }
 }
 
 bootstrap().catch((error) => {
-  console.error('❌ Failed to start server:', error);
   process.exit(1);
 });

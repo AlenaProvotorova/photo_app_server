@@ -16,12 +16,22 @@ export class S3StorageService {
   private readonly cdnBaseUrl?: string;
 
   constructor(private readonly config: ConfigService) {
-    this.bucket = this.config.get<string>('S3_BUCKET');
-    const endpoint = this.config.get<string>('S3_ENDPOINT');
-    const region = this.config.get<string>('S3_REGION');
-    const accessKeyId = this.config.get<string>('S3_ACCESS_KEY');
-    const secretAccessKey = this.config.get<string>('S3_SECRET_KEY');
-    this.cdnBaseUrl = this.config.get<string>('S3_CDN_URL');
+    this.bucket = (this.config.get<string>('S3_BUCKET') || '').trim();
+    const endpointRaw = (this.config.get<string>('S3_ENDPOINT') || '').trim();
+    const regionRaw = (this.config.get<string>('S3_REGION') || '').trim();
+    const accessKeyId = (this.config.get<string>('S3_ACCESS_KEY') || '').trim();
+    const secretAccessKey = (this.config.get<string>('S3_SECRET_KEY') || '').trim();
+    this.cdnBaseUrl = (this.config.get<string>('S3_CDN_URL') || '').trim();
+
+    const endpoint = endpointRaw || `https://s3.${regionRaw}.storage.selcloud.ru`;
+    const region = regionRaw || process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'ru-1';
+
+    try {
+      new URL(endpoint);
+    } catch (e) {
+      throw e;
+    }
+
 
     this.client = new S3Client({
       region,
@@ -38,7 +48,7 @@ export class S3StorageService {
       Key: params.key,
       Body: params.body,
       ContentType: params.contentType,
-      ACL: 'private',
+      ACL: (this.config.get<string>('S3_OBJECT_ACL') || 'public-read') as any,
     });
     await this.client.send(command);
 
