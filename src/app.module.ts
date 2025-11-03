@@ -10,6 +10,7 @@ import { SizeModule } from './sizes/sizes.module';
 import { OrdersModule } from './orders/orders.module';
 import { FolderSettingsModule } from './folder-settings/folder-settings.module';
 import { WatermarksModule } from './watermarks/watermarks.module';
+import { LoggerOptions } from 'typeorm';
 
 @Module({
   imports: [
@@ -38,7 +39,7 @@ import { WatermarksModule } from './watermarks/watermarks.module';
               idleTimeoutMillis: 30000,
               max: 20,
             },
-            logging: process.env.NODE_ENV === 'development',
+            logging: ['error', 'warn'] as LoggerOptions,
             retryAttempts: 3,
             retryDelay: 3000,
           };

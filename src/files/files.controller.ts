@@ -149,8 +149,8 @@ export class FilesController {
     FilesInterceptor('files', 200, {
       storage: multer.memoryStorage(),
       limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB per file
-        files: 200, // Maximum 200 files
+        fileSize: 5 * 1024 * 1024, 
+        files: 200,
       },
     }),
   )
