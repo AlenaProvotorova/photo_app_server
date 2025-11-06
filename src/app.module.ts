@@ -55,7 +55,6 @@ import { LoggerOptions } from 'typeorm';
           database: configService.get('DB_NAME', 'photoapp'),
           synchronize: true,
           entities: [__dirname + '/**/*.entity{.js, .ts}'],
-          logging: process.env.NODE_ENV === 'development',
         };
       },
       inject: [ConfigService],

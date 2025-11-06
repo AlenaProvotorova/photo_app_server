@@ -39,6 +39,7 @@ export class FilesService {
     if (fileType === FileType.TRASH) {
       qb.withDeleted().andWhere('file.deletedAt IS NOT NULL');
     }
+    qb.orderBy('file.originalName', 'ASC');
     return qb.getMany();
   }
 
