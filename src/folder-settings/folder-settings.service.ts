@@ -147,6 +147,12 @@ export class FolderSettingsService {
     settings.firstSettingsAlert = firstSettingsAlert;
   }
 
-  return this.repository.save(settings);
+  const savedSettings = await this.repository.save(settings);
+  
+  // Перезагружаем объект со всеми связями для возврата на фронт
+  return this.repository.findOne({
+    where: { folderId },
+    relations: ['folder'],
+  });
 }
 }
